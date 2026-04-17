@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma'
 import { STEPS } from '@/lib/constants'
 import StepCompletionForm from '@/components/forms/StepCompletionForm'
 
+export const dynamic = 'force-dynamic'
+
 export default async function StepPage({
   params,
 }: {

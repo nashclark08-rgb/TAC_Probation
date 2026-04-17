@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 export default async function AdminPage() {
   const [supportersCount, termsCount, staffCount] = await Promise.all([
     prisma.supportingStaff.count(),

@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { STEPS } from '@/lib/constants'
 
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardPage() {
   const [allStaff, activeConcerns] = await Promise.all([
     prisma.staff.findMany({

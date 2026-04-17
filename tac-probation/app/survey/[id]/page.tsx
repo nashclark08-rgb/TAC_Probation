@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import SurveyResponseForm from '@/components/forms/SurveyResponseForm'
 
+export const dynamic = 'force-dynamic'
+
 export default async function SurveyResponsePage({
   params,
   searchParams,

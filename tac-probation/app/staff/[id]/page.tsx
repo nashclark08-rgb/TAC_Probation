@@ -6,6 +6,8 @@ import { getStepDateRange, formatDateRange } from '@/lib/terms'
 import EarlyConcernForm from '@/components/forms/EarlyConcernForm'
 import FileUpload from '@/components/forms/FileUpload'
 
+export const dynamic = 'force-dynamic'
+
 export default async function StaffDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const member = await prisma.staff.findUnique({

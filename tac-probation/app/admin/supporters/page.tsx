@@ -13,6 +13,8 @@ const ROLE_LABELS: Record<string, string> = {
   middle_leader: 'Middle Leader',
 }
 
+export const dynamic = 'force-dynamic'
+
 export default async function SupportersPage() {
   const supporters = await prisma.supportingStaff.findMany({ orderBy: [{ role: 'asc' }, { name: 'asc' }] })
 

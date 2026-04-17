@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma'
 import { CONCERN_TRIGGERS, SUPPORT_MEASURES } from '@/lib/constants'
 import ResolveConcernForm from '@/components/forms/ResolveConcernForm'
 
+export const dynamic = 'force-dynamic'
+
 export default async function ConcernDetailPage({
   params,
 }: {

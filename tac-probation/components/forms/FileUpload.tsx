@@ -91,7 +91,7 @@ export default function FileUpload({ stepId, uploadedBy, initialAttachments }: P
                 <span className="text-lg">{fileIcon(a.mimeType)}</span>
                 <div>
                   <a
-                    href={`/uploads/${a.filename}`}
+                    href={a.filename}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm font-medium text-[#1e3a5f] hover:underline"

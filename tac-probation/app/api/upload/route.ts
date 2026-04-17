@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { writeFile, mkdir } from 'fs/promises'
-import path from 'path'
+import { put, del } from '@vercel/blob'
 import { prisma } from '@/lib/prisma'
 
-const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads')
 const MAX_SIZE = 10 * 1024 * 1024 // 10 MB
 const ALLOWED_TYPES = [
   'application/pdf',
@@ -29,20 +27,18 @@ export async function POST(request: NextRequest) {
     }
 
     if (!ALLOWED_TYPES.includes(file.type)) {
-      return NextResponse.json({ error: 'File type not allowed. Use PDF, JPEG, PNG, or Word documents.' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'File type not allowed. Use PDF, JPEG, PNG, or Word documents.' },
+        { status: 400 }
+      )
     }
 
-    await mkdir(UPLOAD_DIR, { recursive: true })
-
-    const ext = file.name.split('.').pop() ?? 'bin'
-    const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-    const buffer = Buffer.from(await file.arrayBuffer())
-    await writeFile(path.join(UPLOAD_DIR, filename), buffer)
+    const blob = await put(file.name, file, { access: 'public' })
 
     const attachment = await prisma.stepAttachment.create({
       data: {
         stepId,
-        filename,
+        filename: blob.url,
         originalName: file.name,
         mimeType: file.type,
         size: file.size,
@@ -64,8 +60,7 @@ export async function DELETE(request: NextRequest) {
   const attachment = await prisma.stepAttachment.findUnique({ where: { id } })
   if (!attachment) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  const { unlink } = await import('fs/promises')
-  await unlink(path.join(UPLOAD_DIR, attachment.filename)).catch(() => {})
+  await del(attachment.filename)
   await prisma.stepAttachment.delete({ where: { id } })
 
   return NextResponse.json({ success: true })

@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { upsertTerm } from '@/lib/admin-actions'
 
+export const dynamic = 'force-dynamic'
+
 export default async function TermsPage() {
   const currentYear = new Date().getFullYear()
   const years = [currentYear - 1, currentYear, currentYear + 1]

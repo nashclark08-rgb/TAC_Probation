@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma'
 import { updateSupportingStaff } from '@/lib/admin-actions'
 import SupporterForm from '@/components/forms/SupporterForm'
 
+export const dynamic = 'force-dynamic'
+
 export default async function EditSupporterPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supporter = await prisma.supportingStaff.findUnique({ where: { id } })

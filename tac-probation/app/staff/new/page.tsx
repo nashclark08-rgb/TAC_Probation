@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { adminCreateStaff } from '@/lib/admin-actions'
 
+export const dynamic = 'force-dynamic'
+
 export default async function NewStaffPage() {
   const supporters = await prisma.supportingStaff.findMany({ orderBy: [{ role: 'asc' }, { name: 'asc' }] })
 

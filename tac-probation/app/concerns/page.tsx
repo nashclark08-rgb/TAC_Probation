@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { CONCERN_TRIGGERS, SUPPORT_MEASURES } from '@/lib/constants'
 
+export const dynamic = 'force-dynamic'
+
 export default async function ConcernsPage() {
   const concerns = await prisma.earlyConcern.findMany({
     include: {
