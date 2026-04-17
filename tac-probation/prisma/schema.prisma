@@ -7,23 +7,57 @@ datasource db {
   provider = "sqlite"
 }
 
-model Administrator {
+model SupportingStaff {
+  id         String   @id @default(cuid())
+  name       String
+  email      String   @unique
+  role       String   // hod | stage_leader | dean_of_studies | director_tl | deputy_principal | hr | curriculum_leader | middle_leader
+  subSchool  String?  // junior | senior | both
+  department String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  hodFor      Staff[] @relation("AssignedHod")
+  stageFor    Staff[] @relation("AssignedStageLeader")
+  deanFor     Staff[] @relation("AssignedDean")
+  directorFor Staff[] @relation("AssignedDirector")
+  deputyFor   Staff[] @relation("AssignedDeputy")
+  surveysSent Survey[]
+}
+
+model TermCalendar {
   id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  role      String
+  year      Int
+  term      Int
+  startDate DateTime
+  endDate   DateTime
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([year, term])
 }
 
 model Staff {
-  id        String     @id @default(cuid())
-  name      String
-  email     String     @unique
-  subSchool String
-  department String?
-  startDate DateTime
-  createdAt DateTime   @default(now())
-  probation Probation?
+  id           String           @id @default(cuid())
+  name         String
+  email        String           @unique
+  subSchool    String
+  department   String?
+  teachingRole String?
+  startDate    DateTime
+  createdAt    DateTime         @default(now())
+  probation    Probation?
+
+  hodId        String?
+  hod          SupportingStaff? @relation("AssignedHod",         fields: [hodId],      references: [id])
+  stageLeaderId String?
+  stageLeader  SupportingStaff? @relation("AssignedStageLeader", fields: [stageLeaderId], references: [id])
+  deanId       String?
+  dean         SupportingStaff? @relation("AssignedDean",        fields: [deanId],     references: [id])
+  directorId   String?
+  director     SupportingStaff? @relation("AssignedDirector",    fields: [directorId], references: [id])
+  deputyId     String?
+  deputy       SupportingStaff? @relation("AssignedDeputy",      fields: [deputyId],   references: [id])
 }
 
 model Probation {
@@ -39,21 +73,62 @@ model Probation {
 }
 
 model ProbationStep {
-  id             String    @id @default(cuid())
+  id             String            @id @default(cuid())
   probationId    String
-  probation      Probation @relation(fields: [probationId], references: [id], onDelete: Cascade)
+  probation      Probation         @relation(fields: [probationId], references: [id], onDelete: Cascade)
   stepNumber     Int
-  status         String    @default("pending")
+  status         String            @default("pending")
   outcome        String?
   completedAt    DateTime?
   completedBy    String?
   notes          String?
   supportActions String?
   formData       String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  attachments    StepAttachment[]
+  survey         Survey?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
 
   @@unique([probationId, stepNumber])
+}
+
+model StepAttachment {
+  id           String        @id @default(cuid())
+  stepId       String
+  step         ProbationStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  filename     String
+  originalName String
+  mimeType     String
+  size         Int
+  uploadedBy   String
+  uploadedAt   DateTime      @default(now())
+}
+
+model Survey {
+  id              String           @id @default(cuid())
+  stepId          String           @unique
+  step            ProbationStep    @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  sentById        String?
+  sentBy          SupportingStaff? @relation(fields: [sentById], references: [id])
+  recipientEmails String
+  sentAt          DateTime?
+  closedAt        DateTime?
+  responses       SurveyResponse[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model SurveyResponse {
+  id              String   @id @default(cuid())
+  surveyId        String
+  survey          Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  respondentName  String
+  respondentEmail String
+  overallRating   String
+  strengths       String?
+  concerns        String?
+  additionalNotes String?
+  submittedAt     DateTime @default(now())
 }
 
 model EarlyConcern {
@@ -70,4 +145,15 @@ model EarlyConcern {
   resolution      String?
   resolvedAt      DateTime?
   updatedAt       DateTime  @updatedAt
+}
+
+model EmailLog {
+  id          String   @id @default(cuid())
+  to          String
+  subject     String
+  type        String
+  relatedId   String?
+  sentAt      DateTime @default(now())
+  status      String   @default("sent")
+  error       String?
 }
