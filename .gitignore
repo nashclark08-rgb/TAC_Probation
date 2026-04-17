@@ -1,0 +1,6 @@
+# DB files
+tac-probation/dev.db
+tac-probation/prisma/dev.db
+tac-probation/.next/
+tac-probation/node_modules/
+tac-probation/.env

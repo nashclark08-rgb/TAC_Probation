@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Administrator {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  role      String
+  createdAt DateTime @default(now())
+}
+
+model Staff {
+  id        String     @id @default(cuid())
+  name      String
+  email     String     @unique
+  subSchool String
+  department String?
+  startDate DateTime
+  createdAt DateTime   @default(now())
+  probation Probation?
+}
+
+model Probation {
+  id          String          @id @default(cuid())
+  staffId     String          @unique
+  staff       Staff           @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  status      String          @default("active")
+  currentStep Int             @default(1)
+  steps       ProbationStep[]
+  concerns    EarlyConcern[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model ProbationStep {
+  id             String    @id @default(cuid())
+  probationId    String
+  probation      Probation @relation(fields: [probationId], references: [id], onDelete: Cascade)
+  stepNumber     Int
+  status         String    @default("pending")
+  outcome        String?
+  completedAt    DateTime?
+  completedBy    String?
+  notes          String?
+  supportActions String?
+  formData       String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([probationId, stepNumber])
+}
+
+model EarlyConcern {
+  id              String    @id @default(cuid())
+  probationId     String
+  probation       Probation @relation(fields: [probationId], references: [id], onDelete: Cascade)
+  triggeredAt     DateTime  @default(now())
+  triggeredBy     String
+  triggerStep     Int
+  triggers        String
+  status          String    @default("active")
+  actionsTaken    String?
+  supportMeasures String?
+  resolution      String?
+  resolvedAt      DateTime?
+  updatedAt       DateTime  @updatedAt
+}
