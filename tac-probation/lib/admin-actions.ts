@@ -109,6 +109,9 @@ export async function adminCreateStaff(formData: FormData) {
   const academicAdminId = formData.get('academicAdminId') as string
   const principalId = formData.get('principalId') as string
 
+  const { randomUUID } = await import('crypto')
+  const teacherToken = randomUUID()
+
   const staff = await prisma.staff.create({
     data: {
       name,
@@ -117,6 +120,7 @@ export async function adminCreateStaff(formData: FormData) {
       department: department || null,
       teachingRole: teachingRole || null,
       startDate: new Date(startDate),
+      teacherToken,
       hodId: hodId || null,
       stageLeaderId: stageLeaderId || null,
       deanId: deanId || null,
@@ -183,6 +187,16 @@ export async function adminCreateStaff(formData: FormData) {
       })
     }
   }
+
+  await prisma.auditLog.create({
+    data: {
+      action: 'staff_created',
+      entityType: 'Staff',
+      entityId: staff.id,
+      performedBy: 'Admin',
+      details: `Name: ${name}, School: ${subSchool}`,
+    },
+  })
 
   revalidatePath('/staff')
   redirect(`/staff/${staff.id}`)

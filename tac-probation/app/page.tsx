@@ -1,12 +1,21 @@
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { prisma } from '@/lib/prisma'
 import { STEPS } from '@/lib/constants'
+import DashboardFilters from '@/components/DashboardFilters'
 
 export const dynamic = 'force-dynamic'
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ school?: string; status?: string; year?: string }>
+}) {
+  const { school, status, year } = await searchParams
+
   const [allStaff, activeConcerns] = await Promise.all([
     prisma.staff.findMany({
+      where: { deletedAt: null },
       include: {
         probation: {
           include: {
@@ -19,6 +28,17 @@ export default async function DashboardPage() {
     }),
     prisma.earlyConcern.findMany({ where: { status: 'active' } }),
   ])
+
+  // Extract start years for the year filter dropdown
+  const years = [...new Set(allStaff.map((s) => new Date(s.startDate).getFullYear()))].sort((a, b) => b - a)
+
+  // Apply filters
+  const filteredStaff = allStaff.filter((member) => {
+    if (school && school !== 'all' && member.subSchool !== school) return false
+    if (status && status !== 'all' && member.probation?.status !== status) return false
+    if (year && year !== 'all' && new Date(member.startDate).getFullYear() !== parseInt(year)) return false
+    return true
+  })
 
   const activeCount = allStaff.filter((s) => s.probation?.status === 'active').length
   const completedCount = allStaff.filter((s) => s.probation?.status === 'completed').length
@@ -72,26 +92,42 @@ export default async function DashboardPage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200">
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-700">All Probationary Staff</h2>
-          <Link
-            href="/staff/new"
-            className="text-sm bg-[#1e3a5f] text-white px-4 py-2 rounded-lg hover:bg-[#2d527d] transition-colors"
-          >
-            + Add Staff Member
-          </Link>
+        <div className="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-semibold text-slate-700">All Probationary Staff</h2>
+            {(school || status || year) && (school !== 'all' || status !== 'all' || year !== 'all') && (
+              <span className="text-xs bg-[#1e3a5f]/10 text-[#1e3a5f] px-2 py-0.5 rounded-full">
+                {filteredStaff.length} of {allStaff.length}
+              </span>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Suspense>
+              <DashboardFilters years={years} />
+            </Suspense>
+            <Link
+              href="/staff/new"
+              className="text-sm bg-[#1e3a5f] text-white px-4 py-2 rounded-lg hover:bg-[#2d527d] transition-colors whitespace-nowrap"
+            >
+              + Add Staff Member
+            </Link>
+          </div>
         </div>
 
-        {allStaff.length === 0 ? (
+        {filteredStaff.length === 0 ? (
           <div className="px-6 py-12 text-center text-slate-400">
-            <p className="text-lg mb-2">No staff members added yet</p>
-            <Link href="/staff/new" className="text-[#1e3a5f] underline text-sm">
-              Add your first staff member
-            </Link>
+            <p className="text-lg mb-2">
+              {allStaff.length === 0 ? 'No staff members added yet' : 'No staff match the selected filters'}
+            </p>
+            {allStaff.length === 0 && (
+              <Link href="/staff/new" className="text-[#1e3a5f] underline text-sm">
+                Add your first staff member
+              </Link>
+            )}
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
-            {allStaff.map((member) => {
+            {filteredStaff.map((member) => {
               const prob = member.probation
               const hasActiveConcern = (prob?.concerns?.length ?? 0) > 0
               return (
@@ -100,16 +136,16 @@ export default async function DashboardPage() {
                   href={`/staff/${member.id}`}
                   className="flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition-colors"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-[#1e3a5f] text-white flex items-center justify-center font-bold text-sm">
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="w-10 h-10 rounded-full bg-[#1e3a5f] text-white flex items-center justify-center font-bold text-sm shrink-0">
                       {member.name
                         .split(' ')
                         .map((n) => n[0])
                         .slice(0, 2)
                         .join('')}
                     </div>
-                    <div>
-                      <div className="font-medium text-slate-800 flex items-center gap-2">
+                    <div className="min-w-0">
+                      <div className="font-medium text-slate-800 flex items-center gap-2 flex-wrap">
                         {member.name}
                         {hasActiveConcern && (
                           <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
@@ -117,16 +153,16 @@ export default async function DashboardPage() {
                           </span>
                         )}
                       </div>
-                      <div className="text-sm text-slate-500">
+                      <div className="text-sm text-slate-500 truncate">
                         {member.subSchool === 'junior' ? 'Junior School' : 'Senior School'}
                         {member.department ? ` · ${member.department}` : ''} · {member.email}
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 shrink-0 ml-4">
                     {prob && (
                       <div className="hidden sm:flex items-center gap-1">
-                        {[1,2,3,4,5,6].map((n) => {
+                        {[1, 2, 3, 4, 5, 6].map((n) => {
                           const step = prob.steps.find((s) => s.stepNumber === n)
                           const st = step?.status ?? 'pending'
                           return (
@@ -157,15 +193,15 @@ export default async function DashboardPage() {
       </div>
 
       <div className="mt-8 bg-[#1e3a5f] text-white rounded-xl p-6">
-        <h2 className="font-semibold text-white mb-3">
-          Probation Process — At a Glance
-        </h2>
+        <h2 className="font-semibold text-white mb-3">Probation Process — At a Glance</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {STEPS.map((step) => (
             <div key={step.number} className="text-xs">
               <span className="text-white font-bold">Step {step.number}:</span>{' '}
               <span className="text-slate-200">{step.title}</span>
-              <div className="text-slate-400">{step.timing} · {step.leader}</div>
+              <div className="text-slate-400">
+                {step.timing} · {step.leader}
+              </div>
             </div>
           ))}
         </div>

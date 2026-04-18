@@ -49,6 +49,8 @@ model Staff {
   teachingRole String?
   startDate    DateTime
   createdAt    DateTime         @default(now())
+  deletedAt    DateTime?
+  teacherToken String?          @unique
   probation    Probation?
 
   hodId           String?
@@ -91,10 +93,13 @@ model ProbationStep {
   notes          String?
   supportActions String?
   formData       String?
-  attachments    StepAttachment[]
-  survey         Survey?
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
+  attachments           StepAttachment[]
+  survey                Survey?
+  teacherAcknowledgedAt DateTime?
+  acknowledgedAt        DateTime?
+  acknowledgedBy        String?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
 
   @@unique([probationId, stepNumber])
 }
@@ -163,4 +168,14 @@ model EmailLog {
   sentAt      DateTime @default(now())
   status      String   @default("sent")
   error       String?
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  action      String
+  entityType  String
+  entityId    String
+  performedBy String
+  details     String?
+  createdAt   DateTime @default(now())
 }

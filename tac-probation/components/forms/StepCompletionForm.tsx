@@ -287,47 +287,49 @@ export default function StepCompletionForm({
       {/* Meeting Recorder */}
       {!isCompleted && (
         <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <div>
-              <p className="text-sm font-medium text-slate-700">Meeting Recorder</p>
-              <p className="text-xs text-slate-400 mt-0.5">Record the meeting — AI will summarise key points into the fields below. Chrome/Edge only.</p>
-              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2 py-1 mt-1.5">
-                <strong>Privacy note:</strong> The meeting is not recorded or stored. Speech is transcribed locally in your browser and only the text transcript is briefly sent to AI to generate a summary — no audio ever leaves your device.
-              </p>
-            </div>
-            <div className="flex gap-2">
-              {!isRecording && !isSummarising && (
-                <button
-                  type="button"
-                  onClick={startRecording}
-                  className="flex items-center gap-1.5 text-xs bg-[#1e3a5f] text-white px-3 py-1.5 rounded-lg hover:bg-[#2d527d] transition-colors"
-                >
-                  <span className="w-2 h-2 rounded-full bg-red-400 inline-block" />
-                  Record
-                </button>
-              )}
-              {isRecording && (
-                <>
+          <div className="mb-2">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+              <div>
+                <p className="text-sm font-medium text-slate-700">Meeting Recorder</p>
+                <p className="text-xs text-slate-400 mt-0.5">Record the meeting — AI will summarise key points into the fields below. Chrome/Edge only.</p>
+              </div>
+              <div className="flex flex-wrap gap-2 shrink-0">
+                {!isRecording && !isSummarising && (
                   <button
                     type="button"
-                    onClick={stopAndSummarise}
-                    className="text-xs bg-emerald-600 text-white px-3 py-1.5 rounded-lg hover:bg-emerald-700 transition-colors"
+                    onClick={startRecording}
+                    className="flex items-center gap-1.5 text-xs bg-[#1e3a5f] text-white px-3 py-2 rounded-lg hover:bg-[#2d527d] transition-colors"
                   >
-                    Stop &amp; Summarise
+                    <span className="w-2 h-2 rounded-full bg-red-400 inline-block" />
+                    Record
                   </button>
-                  <button
-                    type="button"
-                    onClick={cancelRecording}
-                    className="text-xs border border-slate-300 text-slate-600 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </>
-              )}
-              {isSummarising && (
-                <span className="text-xs text-slate-500 px-3 py-1.5">Summarising with AI...</span>
-              )}
+                )}
+                {isRecording && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={stopAndSummarise}
+                      className="text-xs bg-emerald-600 text-white px-3 py-2 rounded-lg hover:bg-emerald-700 transition-colors"
+                    >
+                      Stop &amp; Summarise
+                    </button>
+                    <button
+                      type="button"
+                      onClick={cancelRecording}
+                      className="text-xs border border-slate-300 text-slate-600 px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                )}
+                {isSummarising && (
+                  <span className="text-xs text-slate-500 px-3 py-2">Summarising with AI…</span>
+                )}
+              </div>
             </div>
+            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2 py-1.5">
+              <strong>Privacy note:</strong> The meeting is not recorded or stored. Speech is transcribed locally in your browser and only the text transcript is briefly sent to AI to generate a summary — no audio ever leaves your device.
+            </p>
           </div>
 
           {isRecording && (

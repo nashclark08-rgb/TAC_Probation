@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function StaffListPage() {
   const staff = await prisma.staff.findMany({
+    where: { deletedAt: null },
     include: {
       probation: {
         include: {

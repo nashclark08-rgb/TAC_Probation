@@ -6,6 +6,20 @@ import { prisma } from './prisma'
 import { sendEmail, nextStepNotifyEmail, academicAdminCCEmail } from './email'
 import { STEPS } from './constants'
 
+// ── Audit logging ─────────────────────────────────────────────────────────────
+
+async function logAudit(
+  action: string,
+  entityType: string,
+  entityId: string,
+  performedBy: string,
+  details?: string
+) {
+  await prisma.auditLog.create({ data: { action, entityType, entityId, performedBy, details } })
+}
+
+// ── Staff ─────────────────────────────────────────────────────────────────────
+
 export async function createStaff(formData: FormData) {
   const name = formData.get('name') as string
   const email = formData.get('email') as string
@@ -39,9 +53,35 @@ export async function createStaff(formData: FormData) {
     },
   })
 
+  await logAudit('staff_created', 'Staff', staff.id, 'Admin', `Name: ${name}`)
   revalidatePath('/staff')
   redirect(`/staff/${staff.id}`)
 }
+
+export async function deleteStaff(id: string) {
+  const member = await prisma.staff.findUnique({ where: { id }, select: { name: true } })
+  await prisma.staff.update({ where: { id }, data: { deletedAt: new Date() } })
+  await logAudit('staff_archived', 'Staff', id, 'Admin', `Name: ${member?.name}`)
+  revalidatePath('/staff')
+  redirect('/staff')
+}
+
+export async function restoreStaff(id: string) {
+  const member = await prisma.staff.findUnique({ where: { id }, select: { name: true } })
+  await prisma.staff.update({ where: { id }, data: { deletedAt: null } })
+  await logAudit('staff_restored', 'Staff', id, 'Admin', `Name: ${member?.name}`)
+  revalidatePath('/staff')
+  redirect(`/staff/${id}`)
+}
+
+export async function generateTeacherToken(staffId: string) {
+  const { randomUUID } = await import('crypto')
+  const token = randomUUID()
+  await prisma.staff.update({ where: { id: staffId }, data: { teacherToken: token } })
+  revalidatePath(`/staff/${staffId}`)
+}
+
+// ── Step completion ───────────────────────────────────────────────────────────
 
 export async function completeStep(
   stepId: string,
@@ -67,6 +107,14 @@ export async function completeStep(
       completedAt: new Date(),
     },
   })
+
+  await logAudit(
+    'step_completed',
+    'ProbationStep',
+    stepId,
+    data.completedBy,
+    JSON.stringify({ stepNumber, outcome: data.outcome })
+  )
 
   const probation = await prisma.probation.findUnique({
     where: { id: probationId },
@@ -115,7 +163,6 @@ export async function completeStep(
         })
       }
 
-      // Notify the leader responsible for the next step
       const staff = probation.staff
       const currentStepDef = STEPS[stepNumber - 1]
       const nextStepDef = STEPS[nextStepNumber - 1]
@@ -152,7 +199,7 @@ export async function completeStep(
         })
       }
 
-      // CC academic admin for meeting/observation steps (1, 3, 4, 5, 6)
+      // CC academic admin for meeting/observation steps
       const meetingSteps = [1, 3, 4, 5, 6]
       if (meetingSteps.includes(nextStepNumber) && staff.academicAdmin) {
         const admin = staff.academicAdmin
@@ -185,6 +232,8 @@ export async function completeStep(
   revalidatePath(`/staff`)
 }
 
+// ── Early Concerns ────────────────────────────────────────────────────────────
+
 export async function createEarlyConcern(formData: FormData) {
   const probationId = formData.get('probationId') as string
   const triggeredBy = formData.get('triggeredBy') as string
@@ -193,7 +242,7 @@ export async function createEarlyConcern(formData: FormData) {
   const actionsTaken = formData.get('actionsTaken') as string
   const supportMeasures = formData.getAll('supportMeasures') as string[]
 
-  await prisma.earlyConcern.create({
+  const concern = await prisma.earlyConcern.create({
     data: {
       probationId,
       triggeredBy,
@@ -205,23 +254,39 @@ export async function createEarlyConcern(formData: FormData) {
     },
   })
 
+  await logAudit('concern_created', 'EarlyConcern', concern.id, triggeredBy, `Step: ${triggerStep}`)
   revalidatePath('/staff')
 }
 
 export async function resolveEarlyConcern(id: string, resolution: string) {
   await prisma.earlyConcern.update({
     where: { id },
-    data: {
-      status: 'resolved',
-      resolution,
-      resolvedAt: new Date(),
-    },
+    data: { status: 'resolved', resolution, resolvedAt: new Date() },
   })
+  await logAudit('concern_resolved', 'EarlyConcern', id, 'Admin', resolution.slice(0, 100))
   revalidatePath('/staff')
 }
 
-export async function deleteStaff(id: string) {
-  await prisma.staff.delete({ where: { id } })
-  revalidatePath('/staff')
-  redirect('/staff')
+// ── Acknowledgements ──────────────────────────────────────────────────────────
+
+export async function acknowledgeStepAsTeacher(token: string, stepId: string) {
+  const staff = await prisma.staff.findUnique({ where: { teacherToken: token } })
+  if (!staff) return
+  await prisma.probationStep.update({
+    where: { id: stepId },
+    data: { teacherAcknowledgedAt: new Date() },
+  })
+  await logAudit('step_teacher_acknowledged', 'ProbationStep', stepId, staff.name)
+  revalidatePath(`/teacher/${token}`)
+}
+
+export async function acknowledgeStepAsSupporter(stepId: string, supporterToken: string) {
+  const supporter = await prisma.supportingStaff.findUnique({ where: { portalToken: supporterToken } })
+  if (!supporter) return
+  await prisma.probationStep.update({
+    where: { id: stepId },
+    data: { acknowledgedAt: new Date(), acknowledgedBy: supporter.name },
+  })
+  await logAudit('step_supporter_acknowledged', 'ProbationStep', stepId, supporter.name)
+  revalidatePath(`/portal/${supporterToken}`)
 }

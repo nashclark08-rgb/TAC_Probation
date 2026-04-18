@@ -6,6 +6,7 @@ import { STEPS, OUTCOME_LABELS } from '@/lib/constants'
 import { getStepDateRange, formatDateRange } from '@/lib/terms'
 import EarlyConcernForm from '@/components/forms/EarlyConcernForm'
 import FileUpload from '@/components/forms/FileUpload'
+import { generateTeacherToken } from '@/lib/actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -85,6 +86,18 @@ export default async function StaffDetailPage({ params }: { params: Promise<{ id
           >
             View Report
           </Link>
+          {member.teacherToken ? (
+            <a
+              href={`/teacher/${member.teacherToken}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs border border-[#1e3a5f]/40 text-[#1e3a5f] px-3 py-1 rounded-lg hover:bg-[#1e3a5f]/5 transition-colors"
+            >
+              Teacher Portal ↗
+            </a>
+          ) : (
+            <TeacherTokenForm staffId={id} />
+          )}
         </div>
       </div>
 
@@ -338,6 +351,20 @@ function OutcomePill({ outcome }: { outcome: string }) {
     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${colourMap[outcome] ?? 'bg-slate-100 text-slate-700'}`}>
       {OUTCOME_LABELS[outcome] ?? outcome}
     </span>
+  )
+}
+
+function TeacherTokenForm({ staffId }: { staffId: string }) {
+  return (
+    <form action={generateTeacherToken.bind(null, staffId)}>
+      <button
+        type="submit"
+        className="text-xs border border-slate-300 text-slate-500 px-3 py-1 rounded-lg hover:bg-slate-50 transition-colors"
+        title="Generate a private portal link for this teacher"
+      >
+        Generate Teacher Portal
+      </button>
+    </form>
   )
 }
 

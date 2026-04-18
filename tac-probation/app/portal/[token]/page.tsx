@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { STEPS, OUTCOME_LABELS } from '@/lib/constants'
+import { acknowledgeStepAsSupporter } from '@/lib/actions'
+import PortalFileUpload from '@/components/forms/PortalFileUpload'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,38 +26,20 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
   const supporter = await prisma.supportingStaff.findUnique({
     where: { portalToken: token },
     include: {
-      hodFor: {
-        include: { probation: { include: { steps: { orderBy: { stepNumber: 'asc' } } } } },
-      },
-      stageFor: {
-        include: { probation: { include: { steps: { orderBy: { stepNumber: 'asc' } } } } },
-      },
-      deanFor: {
-        include: { probation: { include: { steps: { orderBy: { stepNumber: 'asc' } } } } },
-      },
-      directorFor: {
-        include: { probation: { include: { steps: { orderBy: { stepNumber: 'asc' } } } } },
-      },
-      deputyFor: {
-        include: { probation: { include: { steps: { orderBy: { stepNumber: 'asc' } } } } },
-      },
-      academicAdminFor: {
-        include: { probation: { include: { steps: { orderBy: { stepNumber: 'asc' } } } } },
-      },
-      principalFor: {
-        include: { probation: { include: { steps: { orderBy: { stepNumber: 'asc' } } } } },
-      },
+      hodFor: { include: { probation: { include: { steps: { orderBy: { stepNumber: 'asc' } } } } } },
+      stageFor: { include: { probation: { include: { steps: { orderBy: { stepNumber: 'asc' } } } } } },
+      deanFor: { include: { probation: { include: { steps: { orderBy: { stepNumber: 'asc' } } } } } },
+      directorFor: { include: { probation: { include: { steps: { orderBy: { stepNumber: 'asc' } } } } } },
+      deputyFor: { include: { probation: { include: { steps: { orderBy: { stepNumber: 'asc' } } } } } },
+      academicAdminFor: { include: { probation: { include: { steps: { orderBy: { stepNumber: 'asc' } } } } } },
+      principalFor: { include: { probation: { include: { steps: { orderBy: { stepNumber: 'asc' } } } } } },
     },
   })
 
   if (!supporter) notFound()
 
-  // Deduplicate assigned staff across all role relations
   const seen = new Set<string>()
-  const assignedStaff: Array<{
-    staff: (typeof supporter.hodFor)[0]
-    roles: string[]
-  }> = []
+  const assignedStaff: Array<{ staff: (typeof supporter.hodFor)[0]; roles: string[] }> = []
 
   const roleGroups: Array<{ members: typeof supporter.hodFor; roleLabel: string }> = [
     { members: supporter.hodFor, roleLabel: 'Head of Department' },
@@ -129,9 +113,7 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
                         </p>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {roles.map((r) => (
-                            <span key={r} className="text-xs bg-[#1e3a5f]/10 text-[#1e3a5f] px-2 py-0.5 rounded-full">
-                              {r}
-                            </span>
+                            <span key={r} className="text-xs bg-[#1e3a5f]/10 text-[#1e3a5f] px-2 py-0.5 rounded-full">{r}</span>
                           ))}
                         </div>
                       </div>
@@ -139,19 +121,16 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
                     <ProbationStatusBadge status={prob?.status ?? 'unknown'} />
                   </div>
 
-                  {/* Step progress */}
                   {prob && (
                     <>
+                      {/* Progress bar */}
                       <div className="mb-3">
                         <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
                           <span>Progress</span>
                           <span>{completedCount} of 6 steps completed</span>
                         </div>
                         <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-[#1e3a5f] rounded-full"
-                            style={{ width: `${(completedCount / 6) * 100}%` }}
-                          />
+                          <div className="h-full bg-[#1e3a5f] rounded-full" style={{ width: `${(completedCount / 6) * 100}%` }} />
                         </div>
                       </div>
 
@@ -162,15 +141,13 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
                           const status = stepRecord?.status ?? 'pending'
                           return (
                             <div key={stepDef.number} className="flex flex-col items-center shrink-0">
-                              <div
-                                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 ${
-                                  status === 'completed'
-                                    ? 'bg-emerald-100 border-emerald-400 text-emerald-700'
-                                    : status === 'in_progress'
-                                    ? 'bg-[#1e3a5f] border-[#1e3a5f] text-white'
-                                    : 'bg-white border-slate-200 text-slate-300'
-                                }`}
-                              >
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 ${
+                                status === 'completed'
+                                  ? 'bg-emerald-100 border-emerald-400 text-emerald-700'
+                                  : status === 'in_progress'
+                                  ? 'bg-[#1e3a5f] border-[#1e3a5f] text-white'
+                                  : 'bg-white border-slate-200 text-slate-300'
+                              }`}>
                                 {status === 'completed' ? '✓' : stepDef.number}
                               </div>
                               {stepRecord?.outcome && status === 'completed' && (
@@ -182,29 +159,55 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
                       </div>
 
                       {currentStepDef && (
-                        <div className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 text-sm text-blue-800">
+                        <div className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 text-sm text-blue-800 mb-3">
                           <span className="font-medium">Current:</span> Step {currentStepDef.number} – {currentStepDef.title}
                           <span className="text-blue-500 text-xs ml-2">· {currentStepDef.timing}</span>
                         </div>
                       )}
 
-                      {/* Completed step outcomes */}
+                      {/* Upload observation notes for in-progress step */}
+                      {currentStep && (
+                        <div className="border-t border-slate-100 pt-3 mt-3">
+                          <p className="text-xs font-medium text-slate-600 mb-2">
+                            Upload Observation Notes — Step {currentStep.stepNumber}
+                          </p>
+                          <PortalFileUpload stepId={currentStep.id} uploaderName={supporter.name} />
+                        </div>
+                      )}
+
+                      {/* Completed steps with acknowledge */}
                       {completedCount > 0 && (
-                        <div className="mt-3 space-y-1">
+                        <div className="mt-3 border-t border-slate-100 pt-3 space-y-2">
+                          <p className="text-xs font-medium text-slate-500 mb-1">Completed Steps</p>
                           {prob.steps.filter((s) => s.status === 'completed').map((s) => {
                             const def = STEPS.find((d) => d.number === s.stepNumber)
+                            const ackAction = acknowledgeStepAsSupporter.bind(null, s.id, token)
                             return (
-                              <div key={s.id} className="flex items-center gap-2 text-xs text-slate-500">
-                                <span className="text-emerald-600">✓ Step {s.stepNumber}:</span>
-                                <span>{def?.title}</span>
-                                {s.outcome && (
-                                  <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${outcomeColour(s.outcome)}`}>
-                                    {OUTCOME_LABELS[s.outcome] ?? s.outcome}
-                                  </span>
-                                )}
-                                {s.completedAt && (
-                                  <span className="text-slate-400">
-                                    {new Date(s.completedAt).toLocaleDateString('en-AU')}
+                              <div key={s.id} className="flex items-start justify-between gap-2 text-xs text-slate-500">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-emerald-600">✓ Step {s.stepNumber}:</span>
+                                  <span>{def?.title}</span>
+                                  {s.outcome && (
+                                    <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${outcomeColour(s.outcome)}`}>
+                                      {OUTCOME_LABELS[s.outcome] ?? s.outcome}
+                                    </span>
+                                  )}
+                                  {s.completedAt && (
+                                    <span className="text-slate-400">{new Date(s.completedAt).toLocaleDateString('en-AU')}</span>
+                                  )}
+                                </div>
+                                {!s.acknowledgedAt ? (
+                                  <form action={ackAction} className="shrink-0">
+                                    <button
+                                      type="submit"
+                                      className="text-xs border border-slate-300 text-slate-500 px-2 py-1 rounded-lg hover:bg-slate-50 transition-colors whitespace-nowrap"
+                                    >
+                                      Mark Reviewed
+                                    </button>
+                                  </form>
+                                ) : (
+                                  <span className="text-xs text-emerald-600 shrink-0 whitespace-nowrap">
+                                    ✓ Reviewed {new Date(s.acknowledgedAt).toLocaleDateString('en-AU')}
                                   </span>
                                 )}
                               </div>

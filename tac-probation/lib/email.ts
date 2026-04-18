@@ -190,6 +190,88 @@ export function reportShareEmail(
   )
 }
 
+export function teacherPortalEmail(staffName: string, portalUrl: string): string {
+  return wrap(
+    hdr('Probation Tracker — Your Probation Portal'),
+    `<p>Dear ${staffName},</p>
+     <p>You can now access your personal probation portal to view your progress through the 6-step probation process and acknowledge feedback from each step.</p>
+     ${btn('Access Your Probation Portal', portalUrl)}
+     <p style="margin-top:16px;font-size:12px;color:#64748b">This portal link is personal to you — please do not share it with others.</p>`
+  )
+}
+
+export function stepOverdueEmail(
+  leaderName: string,
+  staffName: string,
+  stepNumber: number,
+  stepTitle: string,
+  portalUrl: string
+): string {
+  return wrap(
+    hdr('Probation Tracker — Step Overdue'),
+    `<p>Dear ${leaderName},</p>
+     <p>The following probation step is <strong>overdue</strong> for <strong>${staffName}</strong> and has not yet been completed:</p>
+     <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px 16px;margin:12px 0;font-size:13px">
+       <strong>Step ${stepNumber}:</strong> ${stepTitle}
+     </div>
+     <p>Please log in to your portal and complete this step at your earliest convenience.</p>
+     ${btn('Go to Your Portal', portalUrl)}`
+  )
+}
+
+export function stepUpcomingEmail(
+  leaderName: string,
+  staffName: string,
+  stepNumber: number,
+  stepTitle: string,
+  stepTiming: string,
+  portalUrl: string
+): string {
+  return wrap(
+    hdr('Probation Tracker — Step Due Soon'),
+    `<p>Dear ${leaderName},</p>
+     <p>This is a reminder that the following probation step for <strong>${staffName}</strong> is due within the next 7 days:</p>
+     <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;margin:12px 0;font-size:13px">
+       <strong>Step ${stepNumber}:</strong> ${stepTitle}<br>
+       <span style="color:#64748b">${stepTiming}</span>
+     </div>
+     ${btn('Go to Your Portal', portalUrl)}`
+  )
+}
+
+export function weeklyDigestEmail(
+  adminName: string,
+  items: Array<{ staffName: string; stepNumber: number; stepTitle: string; status: 'overdue' | 'due_soon' | 'in_progress' }>
+): string {
+  const rows = items.map((item) => {
+    const colour = item.status === 'overdue' ? '#fef2f2' : item.status === 'due_soon' ? '#fffbeb' : '#f0fdf4'
+    const badge = item.status === 'overdue' ? '⚠ Overdue' : item.status === 'due_soon' ? '⏰ Due Soon' : '● In Progress'
+    return `<tr style="background:${colour}">
+      <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0">${item.staffName}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0">Step ${item.stepNumber}: ${item.stepTitle}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:12px">${badge}</td>
+    </tr>`
+  }).join('')
+
+  return wrap(
+    hdr('Probation Tracker — Weekly Summary'),
+    `<p>Dear ${adminName},</p>
+     <p>Here is your weekly summary of probation steps requiring attention:</p>
+     ${items.length === 0
+       ? '<p style="color:#64748b">No steps currently require attention. All probations are on track.</p>'
+       : `<table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:13px">
+            <thead><tr style="background:#1e3a5f;color:#fff">
+              <th style="padding:8px 12px;text-align:left">Staff Member</th>
+              <th style="padding:8px 12px;text-align:left">Step</th>
+              <th style="padding:8px 12px;text-align:left">Status</th>
+            </tr></thead>
+            <tbody>${rows}</tbody>
+          </table>`
+     }
+     <p style="font-size:12px;color:#64748b">Log in to the Probation Tracker to take action on any overdue or upcoming steps.</p>`
+  )
+}
+
 export function surveyInviteEmail(staffName: string, surveyUrl: string, deanName: string): string {
   return wrap(
     hdr('Probation Tracker — Early Progress Review'),
