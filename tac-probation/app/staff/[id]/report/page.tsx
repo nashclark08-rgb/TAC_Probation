@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { STEPS, OUTCOME_LABELS } from '@/lib/constants'
 import { shareReportWithContacts } from '@/lib/admin-actions'
 import PrintButton from '@/components/PrintButton'
+import BackLink from '@/components/BackLink'
 
 export const dynamic = 'force-dynamic'
 
@@ -50,12 +51,9 @@ export default async function StaffReportPage({ params }: { params: Promise<{ id
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      {/* Breadcrumb + actions */}
+      {/* Back + actions */}
       <div className="flex items-center justify-between mb-6 print:hidden">
-        <div className="text-sm text-slate-500">
-          <Link href="/staff" className="hover:text-[#1e3a5f]">Staff</Link> /{' '}
-          <Link href={`/staff/${id}`} className="hover:text-[#1e3a5f]">{member.name}</Link> / Report
-        </div>
+        <BackLink href={`/staff/${id}`} label={`Back to ${member.name}`} />
         <div className="flex gap-2">
           <form action={shareAction}>
             <button

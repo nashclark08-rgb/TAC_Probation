@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { CONCERN_TRIGGERS, SUPPORT_MEASURES } from '@/lib/constants'
 import ResolveConcernForm from '@/components/forms/ResolveConcernForm'
+import BackLink from '@/components/BackLink'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,16 +32,7 @@ export default async function ConcernDetailPage({
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Breadcrumb */}
-      <div className="text-sm text-slate-500 mb-4">
-        <Link href="/concerns" className="hover:text-[#1e3a5f]">
-          Concerns
-        </Link>{' '}
-        /{' '}
-        <Link href={`/staff/${staff.id}`} className="hover:text-[#1e3a5f]">
-          {staff.name}
-        </Link>
-      </div>
+      <BackLink href="/concerns" label="Back to Concerns" />
 
       {/* Header */}
       <div

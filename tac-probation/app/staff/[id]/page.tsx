@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
+import BackLink from '@/components/BackLink'
 import { STEPS, OUTCOME_LABELS } from '@/lib/constants'
 import { getStepDateRange, formatDateRange } from '@/lib/terms'
 import EarlyConcernForm from '@/components/forms/EarlyConcernForm'
@@ -55,6 +56,7 @@ export default async function StaffDetailPage({ params }: { params: Promise<{ id
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <BackLink href="/staff" label="Back to Staff" />
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-4">

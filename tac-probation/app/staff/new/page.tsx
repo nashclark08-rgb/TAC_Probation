@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { adminCreateStaff } from '@/lib/admin-actions'
+import BackLink from '@/components/BackLink'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,9 +14,7 @@ export default async function NewStaffPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      <div className="text-sm text-slate-500 mb-2">
-        <Link href="/staff" className="hover:text-[#1e3a5f]">Staff</Link> / Add New Teacher
-      </div>
+      <BackLink href="/staff" label="Back to Staff" />
       <h1 className="text-2xl font-bold text-slate-800 mb-1">Add Probationary Teacher</h1>
       <p className="text-slate-500 text-sm mb-6">
         All 6 probation steps will be created automatically. Assign supporting staff so the system knows

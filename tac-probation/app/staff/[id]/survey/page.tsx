@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import SurveyManager from '@/components/forms/SurveyManager'
+import BackLink from '@/components/BackLink'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,10 +38,7 @@ export default async function StaffSurveyPage({ params }: { params: Promise<{ id
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="text-sm text-slate-500 mb-4">
-        <Link href="/staff" className="hover:text-[#1e3a5f]">Staff</Link> /{' '}
-        <Link href={`/staff/${id}`} className="hover:text-[#1e3a5f]">{member.name}</Link> / Early Progress Survey
-      </div>
+      <BackLink href={`/staff/${id}`} label={`Back to ${member.name}`} />
 
       <div className="bg-[#1e3a5f] text-white rounded-xl p-6 mb-6">
         <h1 className="text-2xl font-bold">{member.name}</h1>
