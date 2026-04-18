@@ -163,12 +163,12 @@ export default function NewStaffForm({ supporters }: Props) {
       {/* Academic Admin & Principal */}
       <fieldset>
         <legend className="text-sm font-semibold text-slate-700 mb-3 pb-1 border-b border-slate-100 w-full">
-          Sub School Academic Admin &amp; Principal
+          Academic Administration (Sub School) &amp; Principal
         </legend>
         <div className="space-y-4">
           <SupporterSelect
             name="academicAdminId"
-            label="Sub School Academic Admin"
+            label="Academic Administration (Sub School)"
             options={supporters.academic_admin}
             hint="Will be CC'd on meeting/observation emails and will arrange meetings on behalf of supporting staff"
           />

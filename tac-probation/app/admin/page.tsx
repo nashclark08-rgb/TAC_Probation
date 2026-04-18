@@ -26,7 +26,7 @@ export default async function AdminPage() {
     hr: 'Human Resources',
     curriculum_leader: 'Curriculum Leader',
     middle_leader: 'Middle Leader',
-    academic_admin: 'Sub School Academic Admin',
+    academic_admin: 'Academic Administration (Sub School)',
     principal: 'College Principal',
   }
 

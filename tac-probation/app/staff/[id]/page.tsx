@@ -51,7 +51,7 @@ export default async function StaffDetailPage({ params }: { params: Promise<{ id
     member.dean && { label: 'Dean of Studies', person: member.dean },
     member.director && { label: 'Director of Teaching & Learning', person: member.director },
     member.deputy && { label: 'Deputy Principal', person: member.deputy },
-    member.academicAdmin && { label: 'Sub School Academic Admin', person: member.academicAdmin },
+    member.academicAdmin && { label: 'Academic Administration (Sub School)', person: member.academicAdmin },
     member.principal && { label: 'College Principal', person: member.principal },
   ].filter(Boolean) as { label: string; person: { name: string; email: string } }[]
 

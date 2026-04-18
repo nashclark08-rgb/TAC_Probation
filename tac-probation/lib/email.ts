@@ -165,7 +165,7 @@ export function academicAdminCCEmail(
        <strong>Step ${stepNumber}:</strong> ${stepTitle}<br>
        <span style="color:#64748b">${stepTiming}</span>
      </div>
-     <p>As Sub School Academic Admin, please arrange the meeting/observation on behalf of ${leaderName} and confirm the time directly with ${staffName}.</p>
+     <p>As Academic Administration (Sub School), please arrange the meeting/observation on behalf of ${leaderName} and confirm the time directly with ${staffName}.</p>
      <p>Thank you for your support in coordinating this process.</p>
      <p>Warm regards,<br><strong>Trinity Anglican College Probation Tracker</strong></p>`
   )

@@ -23,7 +23,7 @@ const ROLE_LABELS: Record<string, string> = {
   hr: 'HR',
   curriculum_leader: 'Curriculum Leader',
   middle_leader: 'Middle Leader',
-  academic_admin: 'Sub School Academic Admin',
+  academic_admin: 'Academic Administration (Sub School)',
   principal: 'College Principal',
 }
 

@@ -16,7 +16,7 @@ const ROLE_LABELS: Record<string, string> = {
   hr: 'HR',
   curriculum_leader: 'Curriculum Leader',
   middle_leader: 'Middle Leader',
-  academic_admin: 'Sub School Academic Admin',
+  academic_admin: 'Academic Administration (Sub School)',
   principal: 'College Principal',
 }
 
@@ -47,7 +47,7 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
     { members: supporter.deanFor, roleLabel: 'Dean of Studies' },
     { members: supporter.directorFor, roleLabel: 'Director of Teaching & Learning' },
     { members: supporter.deputyFor, roleLabel: 'Deputy Principal' },
-    { members: supporter.academicAdminFor, roleLabel: 'Sub School Academic Admin' },
+    { members: supporter.academicAdminFor, roleLabel: 'Academic Administration (Sub School)' },
     { members: supporter.principalFor, roleLabel: 'College Principal' },
   ]
 

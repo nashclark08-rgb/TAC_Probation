@@ -9,7 +9,7 @@ const ROLES = [
   { value: 'hr', label: 'Human Resources' },
   { value: 'curriculum_leader', label: 'Curriculum Leader' },
   { value: 'middle_leader', label: 'Middle Leader' },
-  { value: 'academic_admin', label: 'Sub School Academic Admin' },
+  { value: 'academic_admin', label: 'Academic Administration (Sub School)' },
   { value: 'principal', label: 'College Principal' },
 ]
 

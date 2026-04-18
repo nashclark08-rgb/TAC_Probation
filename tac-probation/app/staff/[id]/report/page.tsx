@@ -124,7 +124,7 @@ export default async function StaffReportPage({ params }: { params: Promise<{ id
                   { label: 'Dean of Studies', person: member.dean },
                   { label: 'Director of Teaching & Learning', person: member.director },
                   { label: 'Deputy Principal', person: member.deputy },
-                  { label: 'Sub School Academic Admin', person: member.academicAdmin },
+                  { label: 'Academic Administration (Sub School)', person: member.academicAdmin },
                   { label: 'College Principal', person: member.principal },
                 ] as { label: string; person: { name: string } | null }[]
               ).filter((x) => x.person !== null).map(({ label, person }) => (
