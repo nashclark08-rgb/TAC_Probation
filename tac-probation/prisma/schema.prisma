@@ -11,19 +11,21 @@ model SupportingStaff {
   id          String   @id @default(cuid())
   name        String
   email       String   @unique
-  role        String   // hod | stage_leader | dean_of_studies | director_tl | deputy_principal | hr | curriculum_leader | middle_leader
+  role        String   // hod | stage_leader | dean_of_studies | director_tl | deputy_principal | hr | curriculum_leader | middle_leader | academic_admin | principal
   subSchool   String?  // junior | senior | both
   department  String?
   portalToken String   @unique @default(cuid())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  hodFor      Staff[] @relation("AssignedHod")
-  stageFor    Staff[] @relation("AssignedStageLeader")
-  deanFor     Staff[] @relation("AssignedDean")
-  directorFor Staff[] @relation("AssignedDirector")
-  deputyFor   Staff[] @relation("AssignedDeputy")
-  surveysSent Survey[]
+  hodFor           Staff[] @relation("AssignedHod")
+  stageFor         Staff[] @relation("AssignedStageLeader")
+  deanFor          Staff[] @relation("AssignedDean")
+  directorFor      Staff[] @relation("AssignedDirector")
+  deputyFor        Staff[] @relation("AssignedDeputy")
+  academicAdminFor Staff[] @relation("AssignedAcademicAdmin")
+  principalFor     Staff[] @relation("AssignedPrincipal")
+  surveysSent      Survey[]
 }
 
 model TermCalendar {
@@ -49,16 +51,20 @@ model Staff {
   createdAt    DateTime         @default(now())
   probation    Probation?
 
-  hodId        String?
-  hod          SupportingStaff? @relation("AssignedHod",         fields: [hodId],      references: [id])
-  stageLeaderId String?
-  stageLeader  SupportingStaff? @relation("AssignedStageLeader", fields: [stageLeaderId], references: [id])
-  deanId       String?
-  dean         SupportingStaff? @relation("AssignedDean",        fields: [deanId],     references: [id])
-  directorId   String?
-  director     SupportingStaff? @relation("AssignedDirector",    fields: [directorId], references: [id])
-  deputyId     String?
-  deputy       SupportingStaff? @relation("AssignedDeputy",      fields: [deputyId],   references: [id])
+  hodId           String?
+  hod             SupportingStaff? @relation("AssignedHod",           fields: [hodId],           references: [id])
+  stageLeaderId   String?
+  stageLeader     SupportingStaff? @relation("AssignedStageLeader",   fields: [stageLeaderId],   references: [id])
+  deanId          String?
+  dean            SupportingStaff? @relation("AssignedDean",          fields: [deanId],          references: [id])
+  directorId      String?
+  director        SupportingStaff? @relation("AssignedDirector",      fields: [directorId],      references: [id])
+  deputyId        String?
+  deputy          SupportingStaff? @relation("AssignedDeputy",        fields: [deputyId],        references: [id])
+  academicAdminId String?
+  academicAdmin   SupportingStaff? @relation("AssignedAcademicAdmin", fields: [academicAdminId], references: [id])
+  principalId     String?
+  principal       SupportingStaff? @relation("AssignedPrincipal",     fields: [principalId],     references: [id])
 }
 
 model Probation {

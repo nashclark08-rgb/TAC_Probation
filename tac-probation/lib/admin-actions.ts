@@ -10,6 +10,7 @@ import {
   welcomeStaffEmail,
   welcomeSupporterAssignmentEmail,
   welcomeNewSupporterEmail,
+  reportShareEmail,
 } from './email'
 import { CONCERN_TRIGGERS } from './constants'
 
@@ -22,6 +23,8 @@ const ROLE_LABELS: Record<string, string> = {
   hr: 'HR',
   curriculum_leader: 'Curriculum Leader',
   middle_leader: 'Middle Leader',
+  academic_admin: 'Sub School Academic Admin',
+  principal: 'College Principal',
 }
 
 // ── Supporting Staff ──────────────────────────────────────────────────────────
@@ -103,6 +106,8 @@ export async function adminCreateStaff(formData: FormData) {
   const deanId = formData.get('deanId') as string
   const directorId = formData.get('directorId') as string
   const deputyId = formData.get('deputyId') as string
+  const academicAdminId = formData.get('academicAdminId') as string
+  const principalId = formData.get('principalId') as string
 
   const staff = await prisma.staff.create({
     data: {
@@ -117,6 +122,8 @@ export async function adminCreateStaff(formData: FormData) {
       deanId: deanId || null,
       directorId: directorId || null,
       deputyId: deputyId || null,
+      academicAdminId: academicAdminId || null,
+      principalId: principalId || null,
       probation: {
         create: {
           status: 'active',
@@ -149,7 +156,7 @@ export async function adminCreateStaff(formData: FormData) {
   })
 
   // Assignment emails to each unique assigned supporter
-  const supporterIds = [hodId, stageLeaderId, deanId, directorId, deputyId].filter(Boolean) as string[]
+  const supporterIds = [hodId, stageLeaderId, deanId, directorId, deputyId, academicAdminId, principalId].filter(Boolean) as string[]
   const uniqueIds = [...new Set(supporterIds)]
 
   if (uniqueIds.length > 0) {
@@ -212,6 +219,48 @@ export async function createAndSendSurvey(formData: FormData) {
   }
 
   revalidatePath('/staff')
+}
+
+// ── Report sharing ────────────────────────────────────────────────────────────
+
+export async function shareReportWithContacts(staffId: string) {
+  const [member, hrContacts] = await Promise.all([
+    prisma.staff.findUnique({
+      where: { id: staffId },
+      include: { probation: { include: { steps: true } }, principal: true },
+    }),
+    prisma.supportingStaff.findMany({ where: { role: 'hr' } }),
+  ])
+  if (!member) return
+
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'
+  const reportUrl = `${baseUrl}/staff/${staffId}/report`
+  const step6 = member.probation?.steps.find((s: { stepNumber: number; outcome: string | null }) => s.stepNumber === 6)
+  const finalOutcome = step6?.outcome ?? 'Pending'
+
+  const outcomeLabels: Record<string, string> = {
+    confirmed: 'Employment Confirmed',
+    extended: 'Probation Extended',
+    not_confirmed: 'Not Confirmed',
+  }
+  const outcomeLabel = outcomeLabels[finalOutcome] ?? finalOutcome
+
+  const recipients: { name: string; email: string }[] = [
+    ...hrContacts.map((h) => ({ name: h.name, email: h.email })),
+    ...(member.principal ? [{ name: member.principal.name, email: member.principal.email }] : []),
+  ]
+
+  for (const recipient of recipients) {
+    await sendEmail({
+      to: recipient.email,
+      subject: `Final Probation Report: ${member.name} – Trinity Anglican College`,
+      html: reportShareEmail(recipient.name, member.name, reportUrl, outcomeLabel),
+      type: 'report_share',
+      relatedId: staffId,
+    })
+  }
+
+  revalidatePath(`/staff/${staffId}`)
 }
 
 // ── Concern notifications ─────────────────────────────────────────────────────

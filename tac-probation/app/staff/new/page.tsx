@@ -18,7 +18,7 @@ export default async function NewStaffPage() {
       </div>
       <h1 className="text-2xl font-bold text-slate-800 mb-1">Add Probationary Teacher</h1>
       <p className="text-slate-500 text-sm mb-6">
-        All 6 PDI steps will be created automatically. Assign supporting staff so the system knows
+        All 6 probation steps will be created automatically. Assign supporting staff so the system knows
         who to notify and who can complete each step.
       </p>
 
@@ -103,6 +103,27 @@ export default async function NewStaffPage() {
                 name="deputyId"
                 label="Deputy Principal (Step 6)"
                 options={byRole('deputy_principal')}
+              />
+            </div>
+          </fieldset>
+
+          {/* Academic Admin & Principal */}
+          <fieldset>
+            <legend className="text-sm font-semibold text-slate-700 mb-3 pb-1 border-b border-slate-100 w-full">
+              Sub School Academic Admin &amp; Principal
+            </legend>
+            <div className="space-y-4">
+              <SupporterSelect
+                name="academicAdminId"
+                label="Sub School Academic Admin"
+                options={byRole('academic_admin')}
+                hint="Will be CC'd on meeting/observation emails and will arrange meetings on behalf of supporting staff"
+              />
+              <SupporterSelect
+                name="principalId"
+                label="College Principal"
+                options={byRole('principal')}
+                hint="Will receive the final probation report when shared"
               />
             </div>
           </fieldset>

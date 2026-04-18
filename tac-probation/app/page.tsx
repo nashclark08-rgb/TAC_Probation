@@ -123,11 +123,29 @@ export default async function DashboardPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    {prob?.status === 'active' && (
-                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
-                        Step {prob.currentStep}
-                      </span>
+                  <div className="flex items-center gap-4">
+                    {prob && (
+                      <div className="hidden sm:flex items-center gap-1">
+                        {[1,2,3,4,5,6].map((n) => {
+                          const step = prob.steps.find((s) => s.stepNumber === n)
+                          const st = step?.status ?? 'pending'
+                          return (
+                            <div
+                              key={n}
+                              title={`Step ${n}`}
+                              className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold border ${
+                                st === 'completed'
+                                  ? 'bg-emerald-400 border-emerald-500 text-white'
+                                  : st === 'in_progress'
+                                  ? 'bg-[#1e3a5f] border-[#1e3a5f] text-white'
+                                  : 'bg-slate-100 border-slate-200 text-slate-300'
+                              }`}
+                            >
+                              {st === 'completed' ? '✓' : n}
+                            </div>
+                          )
+                        })}
+                      </div>
                     )}
                     <StatusPill status={prob?.status ?? 'unknown'} />
                   </div>
@@ -139,13 +157,13 @@ export default async function DashboardPage() {
       </div>
 
       <div className="mt-8 bg-[#1e3a5f] text-white rounded-xl p-6">
-        <h2 className="font-semibold text-[#9e1b32] mb-3">
-          Teaching Staff Probation &amp; PDI Framework — At a Glance
+        <h2 className="font-semibold text-white mb-3">
+          Probation Process — At a Glance
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {STEPS.map((step) => (
             <div key={step.number} className="text-xs">
-              <span className="text-[#9e1b32] font-bold">Step {step.number}:</span>{' '}
+              <span className="text-white font-bold">Step {step.number}:</span>{' '}
               <span className="text-slate-200">{step.title}</span>
               <div className="text-slate-400">{step.timing} · {step.leader}</div>
             </div>

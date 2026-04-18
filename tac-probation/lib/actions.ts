@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { prisma } from './prisma'
-import { sendEmail, nextStepNotifyEmail } from './email'
+import { sendEmail, nextStepNotifyEmail, academicAdminCCEmail } from './email'
 import { STEPS } from './constants'
 
 export async function createStaff(formData: FormData) {
@@ -73,7 +73,7 @@ export async function completeStep(
     include: {
       steps: true,
       staff: {
-        include: { hod: true, stageLeader: true, dean: true, director: true, deputy: true },
+        include: { hod: true, stageLeader: true, dean: true, director: true, deputy: true, academicAdmin: true },
       },
     },
   })
@@ -148,6 +148,34 @@ export async function completeStep(
             portalUrl
           ),
           type: 'next_step_notify',
+          relatedId: probationId,
+        })
+      }
+
+      // CC academic admin for meeting/observation steps (1, 3, 4, 5, 6)
+      const meetingSteps = [1, 3, 4, 5, 6]
+      if (meetingSteps.includes(nextStepNumber) && staff.academicAdmin) {
+        const admin = staff.academicAdmin
+        const leaderForStep = nextLeaders[0]
+        const leaderRole = (() => {
+          if (nextStepNumber === 1 || nextStepNumber === 3) return staff.hod ? 'Head of Department' : 'Stage Leader'
+          if (nextStepNumber === 4) return 'Dean of Studies'
+          if (nextStepNumber === 5) return 'Director of Teaching & Learning'
+          return 'Deputy Principal'
+        })()
+        await sendEmail({
+          to: admin.email,
+          subject: `Meeting Coordination – Step ${nextStepNumber}: ${staff.name}`,
+          html: academicAdminCCEmail(
+            admin.name,
+            leaderForStep?.name ?? leaderRole,
+            leaderRole,
+            staff.name,
+            nextStepNumber,
+            nextStepDef.title,
+            nextStepDef.timing
+          ),
+          type: 'academic_admin_cc',
           relatedId: probationId,
         })
       }

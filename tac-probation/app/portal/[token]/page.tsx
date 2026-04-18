@@ -14,6 +14,8 @@ const ROLE_LABELS: Record<string, string> = {
   hr: 'HR',
   curriculum_leader: 'Curriculum Leader',
   middle_leader: 'Middle Leader',
+  academic_admin: 'Sub School Academic Admin',
+  principal: 'College Principal',
 }
 
 export default async function PortalPage({ params }: { params: Promise<{ token: string }> }) {
@@ -37,6 +39,12 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
       deputyFor: {
         include: { probation: { include: { steps: { orderBy: { stepNumber: 'asc' } } } } },
       },
+      academicAdminFor: {
+        include: { probation: { include: { steps: { orderBy: { stepNumber: 'asc' } } } } },
+      },
+      principalFor: {
+        include: { probation: { include: { steps: { orderBy: { stepNumber: 'asc' } } } } },
+      },
     },
   })
 
@@ -55,6 +63,8 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
     { members: supporter.deanFor, roleLabel: 'Dean of Studies' },
     { members: supporter.directorFor, roleLabel: 'Director of Teaching & Learning' },
     { members: supporter.deputyFor, roleLabel: 'Deputy Principal' },
+    { members: supporter.academicAdminFor, roleLabel: 'Sub School Academic Admin' },
+    { members: supporter.principalFor, roleLabel: 'College Principal' },
   ]
 
   for (const { members, roleLabel } of roleGroups) {
@@ -76,7 +86,7 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="bg-[#1e3a5f] text-white rounded-xl p-6 mb-6">
-          <h1 className="text-xl font-bold text-[#9e1b32]">Trinity Anglican College</h1>
+          <h1 className="text-xl font-bold text-white">Trinity Anglican College</h1>
           <p className="text-slate-300 text-sm mt-1">Probation Tracker — Supporting Staff Portal</p>
           <div className="mt-4 pt-4 border-t border-white/20">
             <p className="font-semibold text-lg">{supporter.name}</p>

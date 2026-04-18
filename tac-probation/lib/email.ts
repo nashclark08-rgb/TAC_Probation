@@ -32,7 +32,7 @@ export async function sendEmail(payload: EmailPayload): Promise<void> {
 // ── HTML helpers ───────────────────────────────────────────────────────────────
 
 function hdr(subtitle: string) {
-  return `<div style="background:#1e3a5f;padding:20px 28px;border-radius:8px 8px 0 0"><h1 style="color:#9e1b32;margin:0;font-size:18px;font-weight:700">Trinity Anglican College</h1><p style="color:#cbd5e1;margin:4px 0 0;font-size:13px">${subtitle}</p></div>`
+  return `<div style="background:#1e3a5f;padding:20px 28px;border-radius:8px 8px 0 0"><h1 style="color:#ffffff;margin:0;font-size:18px;font-weight:700">Trinity Anglican College</h1><p style="color:#cbd5e1;margin:4px 0 0;font-size:13px">${subtitle}</p></div>`
 }
 
 const ftr = `<p style="margin-top:28px;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:16px">Trinity Anglican College · Probation Tracker<br>This is an automated message — please do not reply directly to this email.</p>`
@@ -146,6 +146,48 @@ export function stepDueEmail(staffName: string, stepTitle: string, leaderName: s
 
 export function concernActivatedEmail(staffName: string, triggerStep: number, concerns: string[], url: string): string {
   return `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px"><div style="background:#9e1b32;padding:20px 28px;border-radius:8px 8px 0 0"><h1 style="color:#fff;margin:0;font-size:18px;font-weight:700">Early Concerns Pathway Activated</h1><p style="color:#fca5a5;margin:4px 0 0;font-size:13px">Trinity Anglican College · Probation Tracker</p></div><div style="background:#f8fafc;padding:24px 28px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px"><p>The Early Concerns Pathway has been activated for <strong>${staffName}</strong> at Step ${triggerStep}.</p><p><strong>Concerns identified:</strong></p><ul>${concerns.map((c) => `<li>${c}</li>`).join('')}</ul><p>Immediate action is required from the Director of Teaching &amp; Learning, Dean of Studies, Deputy Principal, and HR.</p><a href="${url}" style="display:inline-block;background:#9e1b32;color:#fff;padding:12px 28px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px">View Concern Record</a>${ftr}</div></div>`
+}
+
+export function academicAdminCCEmail(
+  adminName: string,
+  leaderName: string,
+  leaderRole: string,
+  staffName: string,
+  stepNumber: number,
+  stepTitle: string,
+  stepTiming: string
+): string {
+  return wrap(
+    hdr('Probation Tracker — Meeting Coordination'),
+    `<p>Dear ${adminName},</p>
+     <p>This is to advise you that <strong>${leaderName}</strong> (${leaderRole}) has been notified to arrange the following probation step for <strong>${staffName}</strong>:</p>
+     <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;margin:12px 0;font-size:13px">
+       <strong>Step ${stepNumber}:</strong> ${stepTitle}<br>
+       <span style="color:#64748b">${stepTiming}</span>
+     </div>
+     <p>As Sub School Academic Admin, please arrange the meeting/observation on behalf of ${leaderName} and confirm the time directly with ${staffName}.</p>
+     <p>Thank you for your support in coordinating this process.</p>
+     <p>Warm regards,<br><strong>Trinity Anglican College Probation Tracker</strong></p>`
+  )
+}
+
+export function reportShareEmail(
+  recipientName: string,
+  staffName: string,
+  reportUrl: string,
+  finalOutcome: string
+): string {
+  return wrap(
+    hdr('Probation Tracker — Final Report'),
+    `<p>Dear ${recipientName},</p>
+     <p>The final probation report for <strong>${staffName}</strong> has been completed and is available for your review.</p>
+     <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 16px;margin:12px 0;font-size:13px">
+       <strong>Final Outcome:</strong> ${finalOutcome}
+     </div>
+     <p>The report includes a summary of all 6 steps, meeting notes, observations, and the final recommendation. Please review and retain for your records.</p>
+     ${btn('View Full Report', reportUrl)}
+     <p style="margin-top:16px;font-size:12px;color:#64748b">This is an authorised share from the Trinity Anglican College Probation Tracker.</p>`
+  )
 }
 
 export function surveyInviteEmail(staffName: string, surveyUrl: string, deanName: string): string {

@@ -26,6 +26,8 @@ export default async function AdminPage() {
     hr: 'Human Resources',
     curriculum_leader: 'Curriculum Leader',
     middle_leader: 'Middle Leader',
+    academic_admin: 'Sub School Academic Admin',
+    principal: 'College Principal',
   }
 
   const setup = {
@@ -40,7 +42,7 @@ export default async function AdminPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-slate-800">Administration</h1>
         <p className="text-slate-500 text-sm mt-1">
-          Configure the PDI framework — set up supporting staff, term calendar, and probationary teachers.
+          Configure the probation framework — set up supporting staff, term calendar, and probationary teachers.
         </p>
       </div>
 

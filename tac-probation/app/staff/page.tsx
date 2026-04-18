@@ -79,14 +79,30 @@ export default async function StaffListPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4">
-                  <div className="text-center hidden md:block">
-                    <div className="text-lg font-bold text-slate-700">{completedSteps}/6</div>
-                    <div className="text-xs text-slate-500">Steps Done</div>
-                  </div>
-                  <div>
-                    <ProgressBar completed={completedSteps} total={6} />
-                  </div>
+                <div className="flex items-center gap-4 shrink-0">
+                  {prob && (
+                    <div className="flex items-center gap-1">
+                      {[1,2,3,4,5,6].map((n) => {
+                        const step = prob.steps.find((s) => s.stepNumber === n)
+                        const st = step?.status ?? 'pending'
+                        return (
+                          <div
+                            key={n}
+                            title={`Step ${n}`}
+                            className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 ${
+                              st === 'completed'
+                                ? 'bg-emerald-400 border-emerald-500 text-white'
+                                : st === 'in_progress'
+                                ? 'bg-[#1e3a5f] border-[#1e3a5f] text-white'
+                                : 'bg-slate-100 border-slate-200 text-slate-300'
+                            }`}
+                          >
+                            {st === 'completed' ? '✓' : n}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
                   <StatusBadge status={prob?.status ?? 'unknown'} currentStep={prob?.currentStep} />
                 </div>
               </Link>
@@ -98,20 +114,6 @@ export default async function StaffListPage() {
   )
 }
 
-function ProgressBar({ completed, total }: { completed: number; total: number }) {
-  const pct = (completed / total) * 100
-  return (
-    <div className="w-24">
-      <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-[#1e3a5f] rounded-full transition-all"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      <div className="text-xs text-slate-400 mt-1 text-center">{Math.round(pct)}%</div>
-    </div>
-  )
-}
 
 function StatusBadge({ status, currentStep }: { status: string; currentStep?: number | null }) {
   const map: Record<string, string> = {

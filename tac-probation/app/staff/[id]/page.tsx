@@ -18,6 +18,8 @@ export default async function StaffDetailPage({ params }: { params: Promise<{ id
       dean: true,
       director: true,
       deputy: true,
+      academicAdmin: true,
+      principal: true,
       probation: {
         include: {
           steps: {
@@ -47,6 +49,8 @@ export default async function StaffDetailPage({ params }: { params: Promise<{ id
     member.dean && { label: 'Dean of Studies', person: member.dean },
     member.director && { label: 'Director of Teaching & Learning', person: member.director },
     member.deputy && { label: 'Deputy Principal', person: member.deputy },
+    member.academicAdmin && { label: 'Sub School Academic Admin', person: member.academicAdmin },
+    member.principal && { label: 'College Principal', person: member.principal },
   ].filter(Boolean) as { label: string; person: { name: string; email: string } }[]
 
   return (
@@ -71,7 +75,15 @@ export default async function StaffDetailPage({ params }: { params: Promise<{ id
             </p>
           </div>
         </div>
-        <StatusBadge status={prob?.status ?? 'unknown'} />
+        <div className="flex flex-col items-end gap-2">
+          <StatusBadge status={prob?.status ?? 'unknown'} />
+          <Link
+            href={`/staff/${id}/report`}
+            className="text-xs border border-slate-300 text-slate-600 px-3 py-1 rounded-lg hover:bg-slate-50 transition-colors"
+          >
+            View Report
+          </Link>
+        </div>
       </div>
 
       {/* Supporters panel */}
