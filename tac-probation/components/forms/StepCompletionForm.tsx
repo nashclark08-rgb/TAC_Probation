@@ -291,6 +291,9 @@ export default function StepCompletionForm({
             <div>
               <p className="text-sm font-medium text-slate-700">Meeting Recorder</p>
               <p className="text-xs text-slate-400 mt-0.5">Record the meeting — AI will summarise key points into the fields below. Chrome/Edge only.</p>
+              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2 py-1 mt-1.5">
+                <strong>Privacy note:</strong> The meeting is not recorded or stored. Speech is transcribed locally in your browser and only the text transcript is briefly sent to AI to generate a summary — no audio ever leaves your device.
+              </p>
             </div>
             <div className="flex gap-2">
               {!isRecording && !isSummarising && (
