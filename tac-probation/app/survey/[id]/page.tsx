@@ -39,7 +39,7 @@ export default async function SurveyResponsePage({
       <div className="max-w-xl mx-auto">
         {/* Header */}
         <div className="bg-[#1e3a5f] text-white rounded-xl p-6 mb-6">
-          <h1 className="font-bold text-xl text-[#c9a84c]">Trinity Anglican College</h1>
+          <h1 className="font-bold text-xl text-[#9e1b32]">Trinity Anglican College</h1>
           <p className="text-slate-300 text-sm mt-1">Probation Tracker — Early Progress Review</p>
         </div>
 

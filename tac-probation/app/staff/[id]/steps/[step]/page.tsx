@@ -56,7 +56,7 @@ export default async function StepPage({
       <div className="bg-[#1e3a5f] text-white rounded-xl p-6 mb-6">
         <div className="flex items-start justify-between">
           <div>
-            <div className="text-[#c9a84c] text-sm font-medium mb-1">Step {stepDef.number}</div>
+            <div className="text-[#9e1b32] text-sm font-medium mb-1">Step {stepDef.number}</div>
             <h1 className="text-2xl font-bold">{stepDef.title}</h1>
             <p className="text-slate-300 text-sm mt-1">
               {stepDef.timing} · Led by: {stepDef.leader}
@@ -83,7 +83,7 @@ export default async function StepPage({
           <ul className="space-y-1.5">
             {stepDef.focusAreas.map((area, i) => (
               <li key={i} className="text-sm text-slate-600 flex gap-2">
-                <span className="text-[#c9a84c] font-bold mt-0.5">·</span>
+                <span className="text-[#9e1b32] font-bold mt-0.5">·</span>
                 <span>{area}</span>
               </li>
             ))}

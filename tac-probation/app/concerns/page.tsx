@@ -70,7 +70,7 @@ export default async function ConcernsPage() {
 
       {/* Information Box */}
       <div className="mt-8 bg-[#1e3a5f] text-white rounded-xl p-6">
-        <h2 className="font-semibold text-[#c9a84c] mb-3">About the Early Concerns Pathway</h2>
+        <h2 className="font-semibold text-[#9e1b32] mb-3">About the Early Concerns Pathway</h2>
         <div className="grid md:grid-cols-2 gap-4 text-sm text-slate-300">
           <div>
             <h3 className="text-white font-medium mb-2">Triggers for Activation</h3>

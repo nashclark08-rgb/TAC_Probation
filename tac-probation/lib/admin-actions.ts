@@ -3,8 +3,26 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { prisma } from './prisma'
-import { sendEmail, concernActivatedEmail, surveyInviteEmail } from './email'
+import {
+  sendEmail,
+  concernActivatedEmail,
+  surveyInviteEmail,
+  welcomeStaffEmail,
+  welcomeSupporterAssignmentEmail,
+  welcomeNewSupporterEmail,
+} from './email'
 import { CONCERN_TRIGGERS } from './constants'
+
+const ROLE_LABELS: Record<string, string> = {
+  hod: 'Head of Department',
+  stage_leader: 'Stage Leader',
+  dean_of_studies: 'Dean of Studies',
+  director_tl: 'Director of Teaching & Learning',
+  deputy_principal: 'Deputy Principal',
+  hr: 'HR',
+  curriculum_leader: 'Curriculum Leader',
+  middle_leader: 'Middle Leader',
+}
 
 // ── Supporting Staff ──────────────────────────────────────────────────────────
 
@@ -15,9 +33,22 @@ export async function createSupportingStaff(formData: FormData) {
   const subSchool = formData.get('subSchool') as string
   const department = formData.get('department') as string
 
-  await prisma.supportingStaff.create({
+  const supporter = await prisma.supportingStaff.create({
     data: { name, email, role, subSchool: subSchool || null, department: department || null },
   })
+
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'
+  const portalUrl = `${baseUrl}/portal/${supporter.portalToken}`
+  const roleLabel = ROLE_LABELS[role] ?? role
+
+  await sendEmail({
+    to: email,
+    subject: 'Trinity Anglican College – Probation Tracker Access',
+    html: welcomeNewSupporterEmail(name, roleLabel, portalUrl),
+    type: 'welcome_new_supporter',
+    relatedId: supporter.id,
+  })
+
   revalidatePath('/admin/supporters')
   redirect('/admin/supporters')
 }
@@ -100,6 +131,51 @@ export async function adminCreateStaff(formData: FormData) {
       },
     },
   })
+
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'
+  const startDateFormatted = new Date(startDate).toLocaleDateString('en-AU', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+
+  // Welcome email to the new teacher
+  await sendEmail({
+    to: email,
+    subject: 'Welcome to Trinity Anglican College – Probation Process',
+    html: welcomeStaffEmail(name, startDateFormatted),
+    type: 'welcome_staff',
+    relatedId: staff.id,
+  })
+
+  // Assignment emails to each unique assigned supporter
+  const supporterIds = [hodId, stageLeaderId, deanId, directorId, deputyId].filter(Boolean) as string[]
+  const uniqueIds = [...new Set(supporterIds)]
+
+  if (uniqueIds.length > 0) {
+    const supporters = await prisma.supportingStaff.findMany({
+      where: { id: { in: uniqueIds } },
+    })
+
+    for (const supporter of supporters) {
+      const portalUrl = `${baseUrl}/portal/${supporter.portalToken}`
+      const roleLabel = ROLE_LABELS[supporter.role] ?? supporter.role
+
+      await sendEmail({
+        to: supporter.email,
+        subject: `Probation Assignment: ${name} – Trinity Anglican College`,
+        html: welcomeSupporterAssignmentEmail(
+          supporter.name,
+          roleLabel,
+          name,
+          startDateFormatted,
+          portalUrl
+        ),
+        type: 'welcome_supporter_assignment',
+        relatedId: staff.id,
+      })
+    }
+  }
 
   revalidatePath('/staff')
   redirect(`/staff/${staff.id}`)

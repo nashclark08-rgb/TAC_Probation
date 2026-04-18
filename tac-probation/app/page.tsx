@@ -139,13 +139,13 @@ export default async function DashboardPage() {
       </div>
 
       <div className="mt-8 bg-[#1e3a5f] text-white rounded-xl p-6">
-        <h2 className="font-semibold text-[#c9a84c] mb-3">
+        <h2 className="font-semibold text-[#9e1b32] mb-3">
           Teaching Staff Probation &amp; PDI Framework — At a Glance
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {STEPS.map((step) => (
             <div key={step.number} className="text-xs">
-              <span className="text-[#c9a84c] font-bold">Step {step.number}:</span>{' '}
+              <span className="text-[#9e1b32] font-bold">Step {step.number}:</span>{' '}
               <span className="text-slate-200">{step.title}</span>
               <div className="text-slate-400">{step.timing} · {step.leader}</div>
             </div>

@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { prisma } from './prisma'
+import { sendEmail, nextStepNotifyEmail } from './email'
+import { STEPS } from './constants'
 
 export async function createStaff(formData: FormData) {
   const name = formData.get('name') as string
@@ -68,12 +70,16 @@ export async function completeStep(
 
   const probation = await prisma.probation.findUnique({
     where: { id: probationId },
-    include: { steps: true },
+    include: {
+      steps: true,
+      staff: {
+        include: { hod: true, stageLeader: true, dean: true, director: true, deputy: true },
+      },
+    },
   })
   if (!probation) return
 
   if (data.outcome === 'concern') {
-    // Early concerns pathway - don't auto-advance
     await prisma.probation.update({
       where: { id: probationId },
       data: { status: 'active' },
@@ -95,17 +101,54 @@ export async function completeStep(
     })
   } else {
     // commendation or additional_observation → advance to next step
-    const nextStep = stepNumber + 1
-    if (nextStep <= 6) {
+    const nextStepNumber = stepNumber + 1
+    if (nextStepNumber <= 6) {
       await prisma.probation.update({
         where: { id: probationId },
-        data: { currentStep: nextStep },
+        data: { currentStep: nextStepNumber },
       })
-      const nextStepRecord = probation.steps.find((s) => s.stepNumber === nextStep)
+      const nextStepRecord = probation.steps.find((s) => s.stepNumber === nextStepNumber)
       if (nextStepRecord) {
         await prisma.probationStep.update({
           where: { id: nextStepRecord.id },
           data: { status: 'in_progress' },
+        })
+      }
+
+      // Notify the leader responsible for the next step
+      const staff = probation.staff
+      const currentStepDef = STEPS[stepNumber - 1]
+      const nextStepDef = STEPS[nextStepNumber - 1]
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'
+
+      const nextLeaders: Array<{ name: string; email: string; portalToken: string }> = []
+      if (nextStepNumber === 1 || nextStepNumber === 3) {
+        if (staff.hod) nextLeaders.push(staff.hod)
+        if (staff.stageLeader) nextLeaders.push(staff.stageLeader)
+      } else if (nextStepNumber === 2 || nextStepNumber === 4) {
+        if (staff.dean) nextLeaders.push(staff.dean)
+      } else if (nextStepNumber === 5) {
+        if (staff.director) nextLeaders.push(staff.director)
+      } else if (nextStepNumber === 6) {
+        if (staff.deputy) nextLeaders.push(staff.deputy)
+      }
+
+      for (const leader of nextLeaders) {
+        const portalUrl = `${baseUrl}/portal/${leader.portalToken}`
+        await sendEmail({
+          to: leader.email,
+          subject: `Action Required: Probation Step ${nextStepNumber} – ${staff.name}`,
+          html: nextStepNotifyEmail(
+            leader.name,
+            staff.name,
+            currentStepDef.title,
+            nextStepNumber,
+            nextStepDef.title,
+            nextStepDef.timing,
+            portalUrl
+          ),
+          type: 'next_step_notify',
+          relatedId: probationId,
         })
       }
     }

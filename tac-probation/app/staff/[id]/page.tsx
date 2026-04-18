@@ -90,13 +90,56 @@ export default async function StaffDetailPage({ params }: { params: Promise<{ id
         </div>
       )}
 
-      {/* Progress bar */}
-      <div className="bg-white rounded-xl border border-slate-200 p-5 mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-slate-600">Overall Progress</span>
+      {/* Progress flowchart */}
+      <div className="bg-white rounded-xl border border-slate-200 p-5 mb-6 overflow-x-auto">
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm font-medium text-slate-600">Probation Timeline</span>
           <span className="text-sm text-slate-500">{completedSteps} of 6 steps completed</span>
         </div>
-        <div className="h-3 bg-slate-200 rounded-full overflow-hidden">
+        <div className="flex items-start gap-0 min-w-max">
+          {STEPS.map((stepDef, idx) => {
+            const stepRecord = prob?.steps.find((s) => s.stepNumber === stepDef.number)
+            const status = stepRecord?.status ?? 'pending'
+            const isLast = idx === STEPS.length - 1
+            return (
+              <div key={stepDef.number} className="flex items-center">
+                <div className="flex flex-col items-center w-20">
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 ${
+                      status === 'completed'
+                        ? 'bg-emerald-100 border-emerald-400 text-emerald-700'
+                        : status === 'in_progress'
+                        ? 'bg-[#1e3a5f] border-[#1e3a5f] text-white'
+                        : 'bg-white border-slate-200 text-slate-400'
+                    }`}
+                  >
+                    {status === 'completed' ? '✓' : stepDef.number}
+                  </div>
+                  <p className="text-xs text-center mt-1 leading-tight text-slate-500 px-1">{stepDef.title}</p>
+                  {status === 'completed' && stepRecord?.outcome && (
+                    <span className={`text-xs px-1.5 py-0.5 rounded mt-1 font-medium ${
+                      stepRecord.outcome === 'commendation' || stepRecord.outcome === 'confirmed' ? 'bg-emerald-100 text-emerald-700' :
+                      stepRecord.outcome === 'concern' || stepRecord.outcome === 'not_confirmed' ? 'bg-red-100 text-red-700' :
+                      'bg-amber-100 text-amber-700'
+                    }`}>
+                      {stepRecord.outcome === 'commendation' ? '★' :
+                       stepRecord.outcome === 'concern' ? '!' :
+                       stepRecord.outcome === 'confirmed' ? '✓' :
+                       stepRecord.outcome === 'additional_observation' ? '+obs' :
+                       stepRecord.outcome === 'extended' ? 'ext' : '✗'}
+                    </span>
+                  )}
+                </div>
+                {!isLast && (
+                  <div className={`h-0.5 w-6 shrink-0 mx-0.5 -mt-8 ${
+                    status === 'completed' ? 'bg-emerald-300' : 'bg-slate-200'
+                  }`} />
+                )}
+              </div>
+            )
+          })}
+        </div>
+        <div className="h-2 bg-slate-100 rounded-full overflow-hidden mt-4">
           <div className="h-full bg-[#1e3a5f] rounded-full transition-all" style={{ width: `${(completedSteps / 6) * 100}%` }} />
         </div>
       </div>
@@ -133,7 +176,7 @@ export default async function StaffDetailPage({ params }: { params: Promise<{ id
             <div
               key={stepDef.number}
               className={`bg-white rounded-xl border p-5 transition-all ${
-                isActive ? 'border-[#1e3a5f] shadow-md' : isCompleted ? 'border-emerald-200' : 'border-slate-200 opacity-70'
+                isActive ? 'border-[#1e3a5f] shadow-md' : isCompleted ? 'border-emerald-200' : 'border-slate-200'
               }`}
             >
               <div className="flex items-start justify-between">
@@ -212,16 +255,18 @@ export default async function StaffDetailPage({ params }: { params: Promise<{ id
                   </div>
                 </div>
 
-                {(isActive || isCompleted) && (
-                  <Link
-                    href={`/staff/${member.id}/steps/${stepDef.number}`}
-                    className={`text-sm px-4 py-2 rounded-lg transition-colors shrink-0 ml-3 ${
-                      isActive ? 'bg-[#1e3a5f] text-white hover:bg-[#2d527d]' : 'border border-slate-300 text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    {isActive ? 'Complete Step' : 'View / Edit'}
-                  </Link>
-                )}
+                <Link
+                  href={`/staff/${member.id}/steps/${stepDef.number}`}
+                  className={`text-sm px-4 py-2 rounded-lg transition-colors shrink-0 ml-3 ${
+                    isActive
+                      ? 'bg-[#1e3a5f] text-white hover:bg-[#2d527d]'
+                      : isCompleted
+                      ? 'border border-slate-300 text-slate-600 hover:bg-slate-50'
+                      : 'border border-amber-300 text-amber-700 hover:bg-amber-50'
+                  }`}
+                >
+                  {isActive ? 'Complete Step' : isCompleted ? 'View / Edit' : 'Admin Override'}
+                </Link>
               </div>
             </div>
           )
