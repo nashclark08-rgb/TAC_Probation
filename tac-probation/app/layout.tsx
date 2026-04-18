@@ -13,7 +13,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-full flex flex-col bg-slate-50">
         <Navbar />
         <main className="flex-1">{children}</main>
-        <footer className="bg-slate-800 text-slate-400 text-xs text-center py-3">
+        <footer className="bg-[#1e3a5f] text-slate-300 text-xs text-center py-3">
           © {new Date().getFullYear()} Trinity Anglican College · Probation Tracker
         </footer>
       </body>
