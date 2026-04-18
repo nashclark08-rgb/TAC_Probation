@@ -3,8 +3,8 @@ import './globals.css'
 import Navbar from '@/components/Navbar'
 
 export const metadata: Metadata = {
-  title: 'TAC Staff Probation | Trinity Anglican College',
-  description: 'Teaching Staff Probation and Development Framework',
+  title: 'Probation Tracker | Trinity Anglican College',
+  description: 'Trinity Anglican College Probation Tracker',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -14,7 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Navbar />
         <main className="flex-1">{children}</main>
         <footer className="bg-slate-800 text-slate-400 text-xs text-center py-3">
-          © {new Date().getFullYear()} Trinity Anglican College · Teaching Staff Probation & PDI Framework
+          © {new Date().getFullYear()} Trinity Anglican College · Probation Tracker
         </footer>
       </body>
     </html>

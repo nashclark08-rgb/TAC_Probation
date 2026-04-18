@@ -10,7 +10,7 @@ export default function Navbar() {
               Trinity Anglican College
             </span>
             <span className="text-white text-xs tracking-wide">
-              Teaching Staff Probation &amp; PDI Framework
+              Probation Tracker
             </span>
           </Link>
           <div className="flex items-center gap-6 text-sm">

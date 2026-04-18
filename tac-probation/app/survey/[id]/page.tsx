@@ -40,7 +40,7 @@ export default async function SurveyResponsePage({
         {/* Header */}
         <div className="bg-[#1e3a5f] text-white rounded-xl p-6 mb-6">
           <h1 className="font-bold text-xl text-[#c9a84c]">Trinity Anglican College</h1>
-          <p className="text-slate-300 text-sm mt-1">Teaching Staff Probation — Early Progress Review</p>
+          <p className="text-slate-300 text-sm mt-1">Probation Tracker — Early Progress Review</p>
         </div>
 
         {isClosed ? (
