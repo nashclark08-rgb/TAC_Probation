@@ -3,6 +3,20 @@
 /* Configure dark mode to use .dark class on <html> */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Trinity maroon palette — lighter, anchored on --tac-gold (#9e1b32) */
+@theme {
+  --color-maroon-50:  oklch(97%  0.008 20);
+  --color-maroon-100: oklch(94%  0.018 20);
+  --color-maroon-200: oklch(88%  0.045 20);
+  --color-maroon-300: oklch(78%  0.080 20);
+  --color-maroon-400: oklch(66%  0.110 20);
+  --color-maroon-500: oklch(56%  0.120 20);
+  --color-maroon-600: oklch(48%  0.115 20);
+  --color-maroon-700: oklch(40%  0.100 20);
+  --color-maroon-800: oklch(32%  0.085 20);
+  --color-maroon-900: oklch(24%  0.065 20);
+}
+
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;

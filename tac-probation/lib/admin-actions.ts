@@ -277,6 +277,67 @@ export async function shareReportWithContacts(staffId: string) {
   revalidatePath(`/staff/${staffId}`)
 }
 
+// ── Out-of-cycle concern initiation ──────────────────────────────────────────
+
+export async function initiateOutOfCycleConcern(formData: FormData) {
+  const probationId = formData.get('probationId') as string
+  const triggeredBy = formData.get('triggeredBy') as string
+  const triggerStep = parseInt(formData.get('triggerStep') as string)
+  const triggers = formData.getAll('triggers') as string[]
+  const actionsTaken = formData.get('actionsTaken') as string
+  const supportMeasures = formData.getAll('supportMeasures') as string[]
+
+  const concern = await prisma.earlyConcern.create({
+    data: {
+      probationId,
+      triggeredBy,
+      triggerStep,
+      triggers: JSON.stringify(triggers),
+      actionsTaken,
+      supportMeasures: JSON.stringify(supportMeasures),
+      status: 'active',
+    },
+  })
+
+  await prisma.auditLog.create({
+    data: {
+      action: 'concern_created_out_of_cycle',
+      entityType: 'EarlyConcern',
+      entityId: concern.id,
+      performedBy: triggeredBy,
+      details: `Out-of-cycle initiation at Step ${triggerStep}`,
+    },
+  })
+
+  // Send stakeholder notifications
+  const full = await prisma.earlyConcern.findUnique({
+    where: { id: concern.id },
+    include: { probation: { include: { staff: { include: { director: true, deputy: true, dean: true } } } } },
+  })
+
+  if (full) {
+    const staff = full.probation.staff
+    const triggerLabels = (JSON.parse(full.triggers) as string[]).map(
+      (id) => CONCERN_TRIGGERS.find((t) => t.id === id)?.label ?? id
+    )
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'
+    const url = `${baseUrl}/concerns/${concern.id}`
+    const recipients = [staff.director?.email, staff.deputy?.email, staff.dean?.email].filter(Boolean) as string[]
+    for (const email of recipients) {
+      await sendEmail({
+        to: email,
+        subject: `URGENT: Early Concerns Pathway – ${staff.name}`,
+        html: concernActivatedEmail(staff.name, full.triggerStep, triggerLabels, url),
+        type: 'concern_activated',
+        relatedId: concern.id,
+      })
+    }
+  }
+
+  revalidatePath('/concerns')
+  redirect(`/concerns/${concern.id}`)
+}
+
 // ── Concern notifications ─────────────────────────────────────────────────────
 
 export async function notifyConcernStakeholders(concernId: string) {

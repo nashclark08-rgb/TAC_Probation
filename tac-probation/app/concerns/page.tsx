@@ -1,37 +1,56 @@
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { CONCERN_TRIGGERS, SUPPORT_MEASURES } from '@/lib/constants'
+import OutOfCycleConcernForm from '@/components/forms/OutOfCycleConcernForm'
 
 export const dynamic = 'force-dynamic'
 
 export default async function ConcernsPage() {
-  const concerns = await prisma.earlyConcern.findMany({
-    include: {
-      probation: {
-        include: { staff: true },
-      },
-    },
-    orderBy: { triggeredAt: 'desc' },
-  })
+  const [concerns, activeStaff] = await Promise.all([
+    prisma.earlyConcern.findMany({
+      include: { probation: { include: { staff: true } } },
+      orderBy: { triggeredAt: 'desc' },
+    }),
+    prisma.staff.findMany({
+      where: { deletedAt: null, probation: { status: 'active' } },
+      include: { probation: true },
+      orderBy: { name: 'asc' },
+    }),
+  ])
 
   const active = concerns.filter((c) => c.status === 'active')
   const resolved = concerns.filter((c) => c.status === 'resolved')
 
+  const staffList = activeStaff
+    .filter((s) => s.probation)
+    .map((s) => ({
+      id: s.id,
+      name: s.name,
+      probationId: s.probation!.id,
+      currentStep: s.probation!.currentStep,
+    }))
+
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-6">
+      <div className="mb-4">
         <h1 className="text-2xl font-bold text-slate-800">Early Concerns Pathway</h1>
         <p className="text-slate-500 text-sm mt-1">
           Structured response to concerns regarding professional practice, conduct, or capacity
         </p>
       </div>
 
+      {staffList.length > 0 && (
+        <div className="mb-6">
+          <OutOfCycleConcernForm staffList={staffList} />
+        </div>
+      )}
+
       {/* Active Concerns */}
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-4">
           <h2 className="text-lg font-semibold text-slate-700">Active Concerns</h2>
           {active.length > 0 && (
-            <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">
+            <span className="text-xs bg-maroon-100 text-maroon-700 px-2 py-0.5 rounded-full font-medium">
               {active.length}
             </span>
           )}
@@ -130,7 +149,7 @@ function ConcernCard({
   return (
     <div
       className={`bg-white rounded-xl border p-5 ${
-        resolved ? 'border-slate-200 opacity-80' : 'border-red-200 shadow-sm'
+        resolved ? 'border-slate-200 opacity-80' : 'border-maroon-200 shadow-sm'
       }`}
     >
       <div className="flex items-start justify-between mb-3">
@@ -146,7 +165,7 @@ function ConcernCard({
               className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                 resolved
                   ? 'bg-slate-100 text-slate-600'
-                  : 'bg-red-100 text-red-700'
+                  : 'bg-maroon-100 text-maroon-700'
               }`}
             >
               {resolved ? 'Resolved' : 'Active'}
