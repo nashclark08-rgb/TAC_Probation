@@ -240,12 +240,12 @@ export default function StepCompletionForm({
   }
 
   const outcomeColours: Record<string, string> = {
-    concern: 'border-red-400 bg-red-50 text-red-700',
+    concern: 'border-maroon-400 bg-maroon-50 text-maroon-700',
     commendation: 'border-emerald-400 bg-emerald-50 text-emerald-700',
     additional_observation: 'border-amber-400 bg-amber-50 text-amber-700',
     confirmed: 'border-emerald-400 bg-emerald-50 text-emerald-700',
     extended: 'border-amber-400 bg-amber-50 text-amber-700',
-    not_confirmed: 'border-red-400 bg-red-50 text-red-700',
+    not_confirmed: 'border-maroon-400 bg-maroon-50 text-maroon-700',
   }
 
   const ratingOptions = ['Outstanding', 'Proficient', 'Developing', 'Unsatisfactory']
@@ -427,20 +427,20 @@ export default function StepCompletionForm({
 
       {/* Early Concerns Inline Panel */}
       {showConcernPanel && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-5 space-y-4">
+        <div className="bg-maroon-50 border border-maroon-200 rounded-xl p-5 space-y-4">
           <div>
-            <h3 className="font-semibold text-red-800 text-sm mb-1">Early Concerns Plan</h3>
-            <p className="text-xs text-red-600">
+            <h3 className="font-semibold text-maroon-800 text-sm mb-1">Early Concerns Plan</h3>
+            <p className="text-xs text-maroon-600">
               Complete the details below — the concern will be registered and relevant staff notified automatically when you submit.
             </p>
           </div>
 
           {/* Triggers */}
           <div>
-            <label className="block text-sm font-medium text-red-800 mb-2">Concerns Identified <span className="text-red-500">*</span></label>
+            <label className="block text-sm font-medium text-maroon-800 mb-2">Concerns Identified <span className="text-maroon-500">*</span></label>
             <div className="space-y-2">
               {CONCERN_TRIGGERS.map((t) => (
-                <label key={t.id} className="flex items-center gap-2 text-sm text-red-700 cursor-pointer">
+                <label key={t.id} className="flex items-center gap-2 text-sm text-maroon-700 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={concernTriggers.includes(t.id)}
@@ -449,7 +449,7 @@ export default function StepCompletionForm({
                         e.target.checked ? [...prev, t.id] : prev.filter((x) => x !== t.id)
                       )
                     }}
-                    className="rounded border-red-300 accent-red-600"
+                    className="rounded border-maroon-300 accent-maroon-600"
                   />
                   {t.label}
                 </label>
@@ -459,22 +459,22 @@ export default function StepCompletionForm({
 
           {/* Actions Taken */}
           <div>
-            <label className="block text-sm font-medium text-red-800 mb-1">Actions Taken / Context</label>
+            <label className="block text-sm font-medium text-maroon-800 mb-1">Actions Taken / Context</label>
             <textarea
               value={concernActions}
               onChange={(e) => setConcernActions(e.target.value)}
               rows={3}
               placeholder="Describe what has already been discussed, attempted, or communicated with the teacher regarding these concerns..."
-              className="w-full border border-red-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 bg-white"
+              className="w-full border border-maroon-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-maroon-400 bg-white"
             />
           </div>
 
           {/* Support Measures */}
           <div>
-            <label className="block text-sm font-medium text-red-800 mb-2">Support Measures to Implement</label>
+            <label className="block text-sm font-medium text-maroon-800 mb-2">Support Measures to Implement</label>
             <div className="space-y-2">
               {SUPPORT_MEASURES.map((m) => (
-                <label key={m.id} className="flex items-center gap-2 text-sm text-red-700 cursor-pointer">
+                <label key={m.id} className="flex items-center gap-2 text-sm text-maroon-700 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={concernMeasures.includes(m.id)}
@@ -483,7 +483,7 @@ export default function StepCompletionForm({
                         e.target.checked ? [...prev, m.id] : prev.filter((x) => x !== m.id)
                       )
                     }}
-                    className="rounded border-red-300 accent-red-600"
+                    className="rounded border-maroon-300 accent-maroon-600"
                   />
                   {m.label}
                 </label>
@@ -491,7 +491,7 @@ export default function StepCompletionForm({
             </div>
           </div>
 
-          <p className="text-xs text-red-500">
+          <p className="text-xs text-maroon-500">
             The Director of Teaching &amp; Learning, Dean of Studies, Deputy Principal, and HR will be notified automatically.
           </p>
         </div>

@@ -38,7 +38,7 @@ export default async function ConcernDetailPage({
       <div
         className={`rounded-xl p-6 mb-6 ${
           concern.status === 'active'
-            ? 'bg-red-600 text-white'
+            ? 'bg-maroon-600 text-white'
             : 'bg-slate-600 text-white'
         }`}
       >
@@ -58,7 +58,7 @@ export default async function ConcernDetailPage({
           <span
             className={`text-xs px-3 py-1.5 rounded-full font-semibold ${
               concern.status === 'active'
-                ? 'bg-white text-red-700'
+                ? 'bg-white text-maroon-700'
                 : 'bg-white/20 text-white'
             }`}
           >
@@ -76,7 +76,7 @@ export default async function ConcernDetailPage({
               const label = CONCERN_TRIGGERS.find((ct) => ct.id === t)?.label ?? t
               return (
                 <li key={i} className="text-sm text-slate-700 flex gap-2">
-                  <span className="text-red-500 font-bold shrink-0">·</span>
+                  <span className="text-maroon-500 font-bold shrink-0">·</span>
                   {label}
                 </li>
               )
