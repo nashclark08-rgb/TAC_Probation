@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { CONCERN_TRIGGERS, SUPPORT_MEASURES } from '@/lib/constants'
 import ResolveConcernForm from '@/components/forms/ResolveConcernForm'
+import ExtendProbationForm from '@/components/forms/ExtendProbationForm'
 import BackLink from '@/components/BackLink'
 
 export const dynamic = 'force-dynamic'
@@ -21,6 +22,10 @@ export default async function ConcernDetailPage({
       },
     },
   })
+
+  const probation = concern
+    ? await prisma.probation.findUnique({ where: { id: concern.probationId } })
+    : null
 
   if (!concern) notFound()
 
@@ -121,6 +126,18 @@ export default async function ConcernDetailPage({
           <li>· Human Resources — notified</li>
         </ul>
       </div>
+
+      {/* Extend Probation */}
+      {concern.status === 'active' && probation && (
+        <div className="bg-white rounded-xl border border-slate-200 p-6 mb-4">
+          <h2 className="font-semibold text-slate-700 mb-1">Extend Probation Period</h2>
+          <p className="text-sm text-slate-500 mb-4">
+            Formally extend the probation period as a result of this concern. The Director of Teaching & Learning,
+            Deputy Principal, and Dean of Studies will be notified and provided a template to send to {staff.name}.
+          </p>
+          <ExtendProbationForm probationId={probation.id} currentStep={probation.currentStep} />
+        </div>
+      )}
 
       {/* Resolve form */}
       {concern.status === 'active' && (

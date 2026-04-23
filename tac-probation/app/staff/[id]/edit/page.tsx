@@ -46,6 +46,7 @@ export default async function EditStaffPage({ params }: { params: Promise<{ id: 
     deputyId: member.deputyId ?? '',
     academicAdminId: member.academicAdminId ?? '',
     principalId: member.principalId ?? '',
+    stepAccessGrants: member.stepAccessGrants ?? '',
   }
 
   return (

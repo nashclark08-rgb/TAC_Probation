@@ -53,6 +53,9 @@ model Staff {
   teacherToken String?          @unique
   probation    Probation?
 
+  // Step access grants per role slot: JSON {"hod":[1,2,3],"dean":null,...} null=all steps
+  stepAccessGrants String?
+
   hodId           String?
   hod             SupportingStaff? @relation("AssignedHod",           fields: [hodId],           references: [id])
   stageLeaderId   String?
@@ -70,23 +73,31 @@ model Staff {
 }
 
 model Probation {
-  id          String          @id @default(cuid())
-  staffId     String          @unique
-  staff       Staff           @relation(fields: [staffId], references: [id], onDelete: Cascade)
-  status      String          @default("active")
-  currentStep Int             @default(1)
-  steps       ProbationStep[]
-  concerns    EarlyConcern[]
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  id                String          @id @default(cuid())
+  staffId           String          @unique
+  staff             Staff           @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  status            String          @default("active")
+  currentStep       Int             @default(1)
+  extensionReason   String?
+  extendedAt        DateTime?
+  extendedBy        String?
+  extensionFromStep Int?
+  steps             ProbationStep[]
+  concerns          EarlyConcern[]
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 }
 
 model ProbationStep {
-  id             String            @id @default(cuid())
+  id             String    @id @default(cuid())
   probationId    String
-  probation      Probation         @relation(fields: [probationId], references: [id], onDelete: Cascade)
+  probation      Probation @relation(fields: [probationId], references: [id], onDelete: Cascade)
   stepNumber     Int
-  status         String            @default("pending")
+  customLabel    String?   // "a", "b" for added steps; displayed as "3a", "3b"
+  isCustom       Boolean   @default(false)
+  sortOrder      Float     @default(0)  // ordering: 1.0, 2.0, 3.0, 3.1=3a, 4.0...
+  customTitle    String?   // title for custom steps
+  status         String    @default("pending")
   outcome        String?
   completedAt    DateTime?
   completedBy    String?
@@ -99,10 +110,10 @@ model ProbationStep {
   teacherReflection     String?
   acknowledgedAt        DateTime?
   acknowledgedBy        String?
-  createdAt             DateTime          @default(now())
-  updatedAt             DateTime          @updatedAt
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
-  @@unique([probationId, stepNumber])
+  @@unique([probationId, sortOrder])
 }
 
 model StepAttachment {
@@ -161,14 +172,14 @@ model EarlyConcern {
 }
 
 model EmailLog {
-  id          String   @id @default(cuid())
-  to          String
-  subject     String
-  type        String
-  relatedId   String?
-  sentAt      DateTime @default(now())
-  status      String   @default("sent")
-  error       String?
+  id        String   @id @default(cuid())
+  to        String
+  subject   String
+  type      String
+  relatedId String?
+  sentAt    DateTime @default(now())
+  status    String   @default("sent")
+  error     String?
 }
 
 model AuditLog {
@@ -176,7 +187,10 @@ model AuditLog {
   action      String
   entityType  String
   entityId    String
+  staffId     String?
   performedBy String
   details     String?
   createdAt   DateTime @default(now())
+
+  @@index([staffId])
 }

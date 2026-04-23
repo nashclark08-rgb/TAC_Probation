@@ -32,20 +32,30 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
   const supporter = await prisma.supportingStaff.findUnique({
     where: { portalToken: token },
     include: {
-      hodFor: { include: { probation: { include: { steps: { orderBy: { stepNumber: 'asc' } } } } } },
-      stageFor: { include: { probation: { include: { steps: { orderBy: { stepNumber: 'asc' } } } } } },
-      deanFor: { include: { probation: { include: { steps: { orderBy: { stepNumber: 'asc' } } } } } },
-      directorFor: { include: { probation: { include: { steps: { orderBy: { stepNumber: 'asc' } } } } } },
-      deputyFor: { include: { probation: { include: { steps: { orderBy: { stepNumber: 'asc' } } } } } },
-      academicAdminFor: { include: { probation: { include: { steps: { orderBy: { stepNumber: 'asc' } } } } } },
-      principalFor: { include: { probation: { include: { steps: { orderBy: { stepNumber: 'asc' } } } } } },
+      hodFor: { include: { probation: { include: { steps: { orderBy: { sortOrder: 'asc' } } } } } },
+      stageFor: { include: { probation: { include: { steps: { orderBy: { sortOrder: 'asc' } } } } } },
+      deanFor: { include: { probation: { include: { steps: { orderBy: { sortOrder: 'asc' } } } } } },
+      directorFor: { include: { probation: { include: { steps: { orderBy: { sortOrder: 'asc' } } } } } },
+      deputyFor: { include: { probation: { include: { steps: { orderBy: { sortOrder: 'asc' } } } } } },
+      academicAdminFor: { include: { probation: { include: { steps: { orderBy: { sortOrder: 'asc' } } } } } },
+      principalFor: { include: { probation: { include: { steps: { orderBy: { sortOrder: 'asc' } } } } } },
     },
   })
 
   if (!supporter) notFound()
 
   const seen = new Set<string>()
-  const assignedStaff: Array<{ staff: (typeof supporter.hodFor)[0]; roles: string[] }> = []
+  const assignedStaff: Array<{ staff: (typeof supporter.hodFor)[0]; roles: string[]; allowedSteps: number[] | null }> = []
+
+  const ROLE_SLOT_MAP: Record<string, string> = {
+    'Head of Department': 'hod',
+    'Stage Leader': 'stageLeader',
+    'Dean of Studies': 'dean',
+    'Director of Teaching & Learning': 'director',
+    'Deputy Principal': 'deputy',
+    'Academic Administration (Sub School)': 'academicAdmin',
+    'College Principal': 'principal',
+  }
 
   const roleGroups: Array<{ members: typeof supporter.hodFor; roleLabel: string }> = [
     { members: supporter.hodFor, roleLabel: 'Head of Department' },
@@ -59,12 +69,28 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
 
   for (const { members, roleLabel } of roleGroups) {
     for (const member of members) {
+      // Determine step access for this role slot
+      const grants = member.stepAccessGrants
+        ? (() => { try { return JSON.parse(member.stepAccessGrants) } catch { return {} } })()
+        : {}
+      const slotKey = ROLE_SLOT_MAP[roleLabel]
+      const slotAccess: number[] | null = slotKey && slotKey in grants ? (grants[slotKey] ?? null) : null
+
       if (seen.has(member.id)) {
         const existing = assignedStaff.find((a) => a.staff.id === member.id)
-        existing?.roles.push(roleLabel)
+        if (existing) {
+          existing.roles.push(roleLabel)
+          // Union access: if either slot is null (all), result is null (all)
+          if (existing.allowedSteps !== null && slotAccess !== null) {
+            const merged = [...new Set([...existing.allowedSteps, ...slotAccess])].sort((a, b) => a - b)
+            existing.allowedSteps = merged
+          } else {
+            existing.allowedSteps = null
+          }
+        }
       } else {
         seen.add(member.id)
-        assignedStaff.push({ staff: member, roles: [roleLabel] })
+        assignedStaff.push({ staff: member, roles: [roleLabel], allowedSteps: slotAccess })
       }
     }
   }
@@ -94,10 +120,14 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
             <h2 className="text-sm font-semibold text-slate-600 uppercase tracking-wide px-1">
               Assigned Probationary Staff ({assignedStaff.length})
             </h2>
-            {assignedStaff.map(({ staff: member, roles }) => {
+            {assignedStaff.map(({ staff: member, roles, allowedSteps }) => {
               const prob = member.probation
-              const completedCount = prob?.steps.filter((s) => s.status === 'completed').length ?? 0
-              const currentStep = prob?.steps.find((s) => s.status === 'in_progress')
+              // Filter steps by portal access; null = all steps
+              const visibleSteps = prob?.steps.filter((s) =>
+                allowedSteps === null || allowedSteps.includes(s.stepNumber)
+              ) ?? []
+              const completedCount = visibleSteps.filter((s) => s.status === 'completed' && !s.isCustom).length
+              const currentStep = visibleSteps.find((s) => s.status === 'in_progress')
               const currentStepDef = currentStep ? STEPS.find((s) => s.number === currentStep.stepNumber) : null
 
               return (
@@ -133,7 +163,7 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
                       <div className="mb-3">
                         <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
                           <span>Progress</span>
-                          <span>{completedCount} of 6 steps completed</span>
+                          <span>{completedCount} of {allowedSteps ? allowedSteps.length : 6} steps completed</span>
                         </div>
                         <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                           <div className="h-full bg-[#1e3a5f] rounded-full" style={{ width: `${(completedCount / 6) * 100}%` }} />
@@ -143,7 +173,7 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
                       {/* Step indicators */}
                       <div className="flex gap-1.5 mb-3 overflow-x-auto pb-1">
                         {STEPS.map((stepDef) => {
-                          const stepRecord = prob.steps.find((s) => s.stepNumber === stepDef.number)
+                          const stepRecord = visibleSteps.find((s) => s.stepNumber === stepDef.number && !s.isCustom)
                           const status = stepRecord?.status ?? 'pending'
                           return (
                             <div key={stepDef.number} className="flex flex-col items-center shrink-0">
@@ -171,6 +201,11 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
                         </div>
                       )}
 
+                      {allowedSteps !== null && (
+                        <p className="text-xs text-slate-400 bg-slate-50 rounded-lg px-2 py-1 mb-2">
+                          Viewing steps: {allowedSteps.map((n) => `Step ${n}`).join(', ')}
+                        </p>
+                      )}
                       {/* Upload observation notes for in-progress step */}
                       {currentStep && (
                         <div className="border-t border-slate-100 pt-3 mt-3">
@@ -185,7 +220,7 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
                       {completedCount > 0 && (
                         <div className="mt-3 border-t border-slate-100 pt-3 space-y-2">
                           <p className="text-xs font-medium text-slate-500 mb-1">Completed Steps</p>
-                          {prob.steps.filter((s) => s.status === 'completed').map((s) => {
+                          {visibleSteps.filter((s) => s.status === 'completed').map((s) => {
                             const def = STEPS.find((d) => d.number === s.stepNumber)
                             const ackAction = acknowledgeStepAsSupporter.bind(null, s.id, token)
                             return (

@@ -109,6 +109,7 @@ export async function adminUpdateStaff(id: string, formData: FormData) {
   const deputyId = formData.get('deputyId') as string
   const academicAdminId = formData.get('academicAdminId') as string
   const principalId = formData.get('principalId') as string
+  const stepAccessGrants = formData.get('stepAccessGrants') as string
 
   await prisma.staff.update({
     where: { id },
@@ -126,6 +127,7 @@ export async function adminUpdateStaff(id: string, formData: FormData) {
       deputyId: deputyId || null,
       academicAdminId: academicAdminId || null,
       principalId: principalId || null,
+      stepAccessGrants: stepAccessGrants || null,
     },
   })
 
@@ -134,6 +136,7 @@ export async function adminUpdateStaff(id: string, formData: FormData) {
       action: 'staff_updated',
       entityType: 'Staff',
       entityId: id,
+      staffId: id,
       performedBy: 'Admin',
       details: `Name: ${name}, School: ${subSchool}`,
     },
@@ -186,6 +189,7 @@ export async function adminCreateStaff(formData: FormData) {
           steps: {
             create: Array.from({ length: 6 }, (_, i) => ({
               stepNumber: i + 1,
+              sortOrder: i + 1,
               status: i === 0 ? 'in_progress' : 'pending',
             })),
           },
@@ -254,6 +258,7 @@ export async function adminCreateStaff(formData: FormData) {
       action: 'staff_created',
       entityType: 'Staff',
       entityId: staff.id,
+      staffId: staff.id,
       performedBy: 'Admin',
       details: `Name: ${name}, School: ${subSchool}`,
     },
