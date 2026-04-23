@@ -96,6 +96,7 @@ model ProbationStep {
   attachments           StepAttachment[]
   survey                Survey?
   teacherAcknowledgedAt DateTime?
+  teacherReflection     String?
   acknowledgedAt        DateTime?
   acknowledgedBy        String?
   createdAt             DateTime          @default(now())

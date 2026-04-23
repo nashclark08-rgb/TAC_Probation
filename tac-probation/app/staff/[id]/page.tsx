@@ -86,6 +86,12 @@ export default async function StaffDetailPage({ params }: { params: Promise<{ id
           >
             View Report
           </Link>
+          <Link
+            href={`/staff/${id}/edit`}
+            className="text-xs border border-[#1e3a5f]/30 text-[#1e3a5f] px-3 py-1 rounded-lg hover:bg-[#1e3a5f]/5 transition-colors"
+          >
+            Edit Record
+          </Link>
           {member.teacherToken ? (
             <a
               href={`/teacher/${member.teacherToken}`}

@@ -11,6 +11,7 @@ import {
   welcomeSupporterAssignmentEmail,
   welcomeNewSupporterEmail,
   reportShareEmail,
+  teacherPortalEmail,
 } from './email'
 import { CONCERN_TRIGGERS } from './constants'
 
@@ -92,6 +93,56 @@ export async function upsertTerm(formData: FormData) {
   revalidatePath('/admin/terms')
 }
 
+// ── Staff (edit assignments) ──────────────────────────────────────────────────
+
+export async function adminUpdateStaff(id: string, formData: FormData) {
+  const name = formData.get('name') as string
+  const email = formData.get('email') as string
+  const subSchool = formData.get('subSchool') as string
+  const department = formData.get('department') as string
+  const teachingRole = formData.get('teachingRole') as string
+  const startDate = formData.get('startDate') as string
+  const hodId = formData.get('hodId') as string
+  const stageLeaderId = formData.get('stageLeaderId') as string
+  const deanId = formData.get('deanId') as string
+  const directorId = formData.get('directorId') as string
+  const deputyId = formData.get('deputyId') as string
+  const academicAdminId = formData.get('academicAdminId') as string
+  const principalId = formData.get('principalId') as string
+
+  await prisma.staff.update({
+    where: { id },
+    data: {
+      name,
+      email,
+      subSchool,
+      department: department || null,
+      teachingRole: teachingRole || null,
+      startDate: new Date(startDate),
+      hodId: hodId || null,
+      stageLeaderId: stageLeaderId || null,
+      deanId: deanId || null,
+      directorId: directorId || null,
+      deputyId: deputyId || null,
+      academicAdminId: academicAdminId || null,
+      principalId: principalId || null,
+    },
+  })
+
+  await prisma.auditLog.create({
+    data: {
+      action: 'staff_updated',
+      entityType: 'Staff',
+      entityId: id,
+      performedBy: 'Admin',
+      details: `Name: ${name}, School: ${subSchool}`,
+    },
+  })
+
+  revalidatePath(`/staff/${id}`)
+  redirect(`/staff/${id}`)
+}
+
 // ── Staff (admin create with full assignments) ────────────────────────────────
 
 export async function adminCreateStaff(formData: FormData) {
@@ -150,12 +201,22 @@ export async function adminCreateStaff(formData: FormData) {
     year: 'numeric',
   })
 
-  // Welcome email to the new teacher
+  // Welcome email to the new teacher (process overview)
   await sendEmail({
     to: email,
     subject: 'Welcome to Trinity Anglican College – Probation Process',
     html: welcomeStaffEmail(name, startDateFormatted),
     type: 'welcome_staff',
+    relatedId: staff.id,
+  })
+
+  // Teacher portal access email (sent automatically with token)
+  const teacherPortalUrl = `${baseUrl}/teacher/${teacherToken}`
+  await sendEmail({
+    to: email,
+    subject: 'Trinity Anglican College – Your Probation Portal Access',
+    html: teacherPortalEmail(name, teacherPortalUrl),
+    type: 'teacher_portal',
     relatedId: staff.id,
   })
 

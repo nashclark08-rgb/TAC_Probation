@@ -290,3 +290,14 @@ export async function acknowledgeStepAsSupporter(stepId: string, supporterToken:
   await logAudit('step_supporter_acknowledged', 'ProbationStep', stepId, supporter.name)
   revalidatePath(`/portal/${supporterToken}`)
 }
+
+export async function saveTeacherReflection(token: string, stepId: string, reflection: string) {
+  const staff = await prisma.staff.findUnique({ where: { teacherToken: token } })
+  if (!staff) return
+  await prisma.probationStep.update({
+    where: { id: stepId },
+    data: { teacherReflection: reflection },
+  })
+  await logAudit('teacher_reflection_saved', 'ProbationStep', stepId, staff.name)
+  revalidatePath(`/teacher/${token}`)
+}

@@ -48,6 +48,22 @@ const SUPPORT_PROMPTS: Record<number, string> = {
   6: 'List professional growth priorities, any co-curricular contributions identified, and transition arrangements into ongoing employment or next steps...',
 }
 
+const PRE_OBS_FIELDS = [
+  { key: 'lessonFocus', label: 'Lesson Focus', placeholder: 'What is the focus of this lesson?' },
+  { key: 'classContext', label: 'Context of the Class', placeholder: 'Describe the class — year level, ability range, class dynamics...' },
+  { key: 'observationFocus', label: 'Observation Focus (AITSL Standards)', placeholder: 'Which AITSL standards or practice areas will this observation focus on?' },
+  { key: 'lessonStructure', label: 'Lesson Structure', placeholder: 'Outline the planned lesson structure and sequence...' },
+  { key: 'anticipatedChallenges', label: 'Anticipated Challenges', placeholder: 'Any anticipated challenges or areas the teacher wants specific feedback on?' },
+]
+
+const POST_OBS_FIELDS = [
+  { key: 'teacherReflection', label: 'Teacher Reflection', placeholder: 'How does the teacher feel the lesson went overall?' },
+  { key: 'studentLearning', label: 'Evidence of Student Learning', placeholder: 'What evidence of student learning was observed during the lesson?' },
+  { key: 'observationFeedback', label: 'Observation Focus Feedback', placeholder: 'Feedback on the agreed AITSL observation focus areas...' },
+  { key: 'keyStrengths', label: 'Key Strengths', placeholder: 'Key strengths demonstrated in this lesson...' },
+  { key: 'nextSteps', label: 'Agreed Next Steps', placeholder: 'Agreed next steps and areas for development before the next observation...' },
+]
+
 // Browser speech recognition types
 interface ISpeechRecognition extends EventTarget {
   continuous: boolean
@@ -95,13 +111,23 @@ export default function StepCompletionForm({
   const [notes, setNotes] = useState(existingData.notes)
   const [supportActions, setSupportActions] = useState(existingData.supportActions)
 
-  // Observation ratings (steps 3 & 4)
-  const [ratings, setRatings] = useState<Record<string, string>>(() => {
-    if (existingData.formData) {
-      try { return JSON.parse(existingData.formData) } catch { return {} }
-    }
-    return {}
-  })
+  // Observation ratings (steps 3 & 4) — formData may be legacy flat or new nested format
+  const parsedForm = (() => {
+    if (!existingData.formData) return null
+    try { return JSON.parse(existingData.formData) } catch { return null }
+  })()
+  const isNestedForm = parsedForm && typeof parsedForm.ratings === 'object'
+
+  const [ratings, setRatings] = useState<Record<string, string>>(
+    isNestedForm ? parsedForm.ratings : (parsedForm ?? {})
+  )
+  const [preObs, setPreObs] = useState<Record<string, string>>(
+    isNestedForm ? (parsedForm.pre ?? {}) : {}
+  )
+  const [postObs, setPostObs] = useState<Record<string, string>>(
+    isNestedForm ? (parsedForm.post ?? {}) : {}
+  )
+  const [isObsAssisting, setIsObsAssisting] = useState(false)
 
   // Early Concerns inline fields
   const [concernTriggers, setConcernTriggers] = useState<string[]>([])
@@ -219,7 +245,9 @@ export default function StepCompletionForm({
         completedBy,
         notes,
         supportActions,
-        formData: isObservation ? JSON.stringify(ratings) : undefined,
+        formData: isObservation
+          ? JSON.stringify({ ratings, pre: preObs, post: postObs })
+          : undefined,
       })
 
       // If concern outcome, also create the Early Concern record
@@ -250,8 +278,61 @@ export default function StepCompletionForm({
 
   const ratingOptions = ['Outstanding', 'Proficient', 'Developing', 'Unsatisfactory']
 
+  const obsAiAssist = async (phase: 'pre' | 'post') => {
+    setIsObsAssisting(true)
+    try {
+      const res = await fetch('/api/summarise-notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transcript: notes || supportActions || `Step ${stepNumber}: ${stepDef.title}`,
+          stepNumber,
+          stepTitle: stepDef.title,
+          mode: phase === 'pre' ? 'pre_observation' : 'post_observation',
+        }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (phase === 'pre' && data.pre) setPreObs(data.pre)
+        if (phase === 'post' && data.post) setPostObs(data.post)
+      }
+    } catch { /* silent */ }
+    setIsObsAssisting(false)
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {/* Pre-Observation Discussion (Steps 3 & 4) */}
+      {isObservation && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-blue-800">Pre-Observation Discussion</h3>
+              <p className="text-xs text-blue-600 mt-0.5">Complete before the observation visit</p>
+            </div>
+            {!isCompleted && (
+              <button type="button" onClick={() => obsAiAssist('pre')} disabled={isObsAssisting}
+                className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">
+                {isObsAssisting ? 'Generating…' : '✦ AI Assist'}
+              </button>
+            )}
+          </div>
+          {PRE_OBS_FIELDS.map((f) => (
+            <div key={f.key}>
+              <label className="block text-xs font-medium text-blue-800 mb-1">{f.label}</label>
+              <textarea
+                value={preObs[f.key] ?? ''}
+                onChange={(e) => setPreObs((p) => ({ ...p, [f.key]: e.target.value }))}
+                disabled={isCompleted}
+                rows={2}
+                placeholder={f.placeholder}
+                className="w-full border border-blue-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-blue-50/50 bg-white"
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Observation Ratings (Steps 3 & 4) */}
       {isObservation && (
         <div className="space-y-4">
@@ -279,6 +360,37 @@ export default function StepCompletionForm({
               {ratings[idx] && (
                 <p className="text-xs text-slate-500 mt-1">Selected: {ratings[idx]}</p>
               )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Post-Observation Discussion (Steps 3 & 4) */}
+      {isObservation && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-emerald-800">Post-Observation Discussion</h3>
+              <p className="text-xs text-emerald-600 mt-0.5">Complete after the observation visit</p>
+            </div>
+            {!isCompleted && (
+              <button type="button" onClick={() => obsAiAssist('post')} disabled={isObsAssisting}
+                className="text-xs bg-emerald-600 text-white px-3 py-1.5 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50">
+                {isObsAssisting ? 'Generating…' : '✦ AI Assist'}
+              </button>
+            )}
+          </div>
+          {POST_OBS_FIELDS.map((f) => (
+            <div key={f.key}>
+              <label className="block text-xs font-medium text-emerald-800 mb-1">{f.label}</label>
+              <textarea
+                value={postObs[f.key] ?? ''}
+                onChange={(e) => setPostObs((p) => ({ ...p, [f.key]: e.target.value }))}
+                disabled={isCompleted}
+                rows={2}
+                placeholder={f.placeholder}
+                className="w-full border border-emerald-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-400 disabled:bg-emerald-50/50 bg-white"
+              />
             </div>
           ))}
         </div>

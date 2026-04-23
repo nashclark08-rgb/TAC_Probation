@@ -13,11 +13,17 @@ const ROLE_LABELS: Record<string, string> = {
   dean_of_studies: 'Dean of Studies',
   director_tl: 'Director of Teaching & Learning',
   deputy_principal: 'Deputy Principal',
-  hr: 'HR',
+  hr: 'Human Resources',
   curriculum_leader: 'Curriculum Leader',
   middle_leader: 'Middle Leader',
   academic_admin: 'Academic Administration (Sub School)',
   principal: 'College Principal',
+}
+
+function subSchoolSuffix(s: string | null | undefined): string {
+  if (s === 'junior') return ' – Junior School'
+  if (s === 'senior') return ' – Senior School'
+  return ''
 }
 
 export default async function PortalPage({ params }: { params: Promise<{ token: string }> }) {
@@ -74,7 +80,7 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
           <p className="text-slate-300 text-sm mt-1">Probation Tracker — Supporting Staff Portal</p>
           <div className="mt-4 pt-4 border-t border-white/20">
             <p className="font-semibold text-lg">{supporter.name}</p>
-            <p className="text-slate-300 text-sm">{roleLabel}</p>
+            <p className="text-slate-300 text-sm">{roleLabel}{subSchoolSuffix(supporter.subSchool)}</p>
           </div>
         </div>
 

@@ -1,11 +1,11 @@
 import Link from 'next/link'
 
 const ROLES = [
-  { value: 'deputy_principal', label: 'Deputy Principal (Sub-School)' },
-  { value: 'director_tl', label: 'Director of Teaching & Learning' },
-  { value: 'dean_of_studies', label: 'Dean of Studies (Sub-School)' },
   { value: 'hod', label: 'Head of Department' },
   { value: 'stage_leader', label: 'Stage Leader' },
+  { value: 'dean_of_studies', label: 'Dean of Studies' },
+  { value: 'director_tl', label: 'Director of Teaching & Learning' },
+  { value: 'deputy_principal', label: 'Deputy Principal' },
   { value: 'hr', label: 'Human Resources' },
   { value: 'curriculum_leader', label: 'Curriculum Leader' },
   { value: 'middle_leader', label: 'Middle Leader' },

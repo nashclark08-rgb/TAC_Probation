@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { STEPS, OUTCOME_LABELS } from '@/lib/constants'
-import { acknowledgeStepAsTeacher } from '@/lib/actions'
+import { acknowledgeStepAsTeacher, saveTeacherReflection } from '@/lib/actions'
+import TeacherReflectionForm from '@/components/forms/TeacherReflectionForm'
 
 export const dynamic = 'force-dynamic'
 
@@ -156,7 +157,7 @@ export default async function TeacherPortalPage({
                     <p className="text-xs text-slate-400 mt-0.5">{stepDef.timing} · {stepDef.leader}</p>
 
                     {isCompleted && stepRecord && (
-                      <div className="mt-3 space-y-2">
+                      <div className="mt-3 space-y-3">
                         {stepRecord.outcome && (
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-medium text-slate-500">Outcome:</span>
@@ -173,25 +174,36 @@ export default async function TeacherPortalPage({
                               : ''}
                           </p>
                         )}
-                        {stepRecord.notes && (
-                          <div className="bg-slate-50 rounded-lg p-3 text-xs text-slate-600">
-                            <p className="font-medium text-slate-500 mb-1">Feedback / Notes</p>
-                            <p className="whitespace-pre-wrap">{stepRecord.notes}</p>
+
+                        {/* Meeting Notes & Actions — always visible */}
+                        <div className="border border-slate-200 rounded-lg overflow-hidden">
+                          <div className="bg-slate-50 px-3 py-2 border-b border-slate-200">
+                            <p className="text-xs font-semibold text-slate-600">Meeting Notes &amp; Actions</p>
                           </div>
-                        )}
-                        {stepRecord.supportActions && (
-                          <div className="bg-blue-50 rounded-lg p-3 text-xs text-slate-600">
-                            <p className="font-medium text-blue-600 mb-1">Agreed Actions & Supports</p>
-                            <p className="whitespace-pre-wrap">{stepRecord.supportActions}</p>
+                          <div className="p-3 space-y-2">
+                            {stepRecord.notes ? (
+                              <div>
+                                <p className="text-xs font-medium text-slate-500 mb-1">Feedback / Notes</p>
+                                <p className="text-xs text-slate-600 whitespace-pre-wrap">{stepRecord.notes}</p>
+                              </div>
+                            ) : (
+                              <p className="text-xs text-slate-400 italic">No meeting notes recorded.</p>
+                            )}
+                            {stepRecord.supportActions && (
+                              <div className="pt-2 border-t border-slate-100">
+                                <p className="text-xs font-medium text-blue-600 mb-1">Agreed Actions &amp; Supports</p>
+                                <p className="text-xs text-slate-600 whitespace-pre-wrap">{stepRecord.supportActions}</p>
+                              </div>
+                            )}
                           </div>
-                        )}
+                        </div>
 
                         {/* Acknowledge section */}
                         {!stepRecord.teacherAcknowledgedAt ? (
                           <form action={ackAction}>
                             <button
                               type="submit"
-                              className="mt-2 text-xs bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors font-medium"
+                              className="mt-1 text-xs bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors font-medium"
                             >
                               ✓ I acknowledge this feedback
                             </button>
@@ -200,13 +212,22 @@ export default async function TeacherPortalPage({
                             </p>
                           </form>
                         ) : (
-                          <div className="flex items-center gap-2 mt-2 text-xs text-emerald-600">
+                          <div className="flex items-center gap-2 mt-1 text-xs text-emerald-600">
                             <span>✓ Acknowledged</span>
                             <span className="text-slate-400">
                               {new Date(stepRecord.teacherAcknowledgedAt).toLocaleDateString('en-AU')}
                             </span>
                           </div>
                         )}
+
+                        {/* Teacher reflection */}
+                        <TeacherReflectionForm
+                          token={token}
+                          stepId={stepRecord.id}
+                          stepNumber={stepDef.number}
+                          existingReflection={stepRecord.teacherReflection ?? ''}
+                          saveAction={saveTeacherReflection}
+                        />
                       </div>
                     )}
                   </div>

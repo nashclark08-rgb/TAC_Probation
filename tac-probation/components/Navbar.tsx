@@ -31,6 +31,9 @@ export default function Navbar() {
               <Link href="/reports" className="hover:text-white/80 transition-colors whitespace-nowrap">
                 Reports
               </Link>
+              <Link href="/overview" className="hover:text-white/80 transition-colors whitespace-nowrap">
+                Overview
+              </Link>
               <div className="flex-1" />
               <ThemeToggle />
               <Link
