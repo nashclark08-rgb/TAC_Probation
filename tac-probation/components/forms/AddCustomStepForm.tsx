@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { addCustomStep } from '@/lib/actions'
 
 interface Props {
@@ -22,28 +22,34 @@ export default function AddCustomStepForm({ probationId, existingSteps }: Props)
   const [afterStep, setAfterStep] = useState('3')
   const [customTitle, setCustomTitle] = useState('')
   const [addedBy, setAddedBy] = useState('')
-  const [isPending, startTransition] = useTransition()
+  const [isPending, setIsPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  // Auto-suggest the next label (a, b, c...) based on existing custom steps
   const suggestedLabel = (() => {
     const count = existingSteps.filter((s) => s.isCustom && s.stepNumber === parseInt(afterStep)).length
-    return String.fromCharCode(97 + count) // 'a', 'b', 'c'...
+    return String.fromCharCode(97 + count)
   })()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!customTitle.trim() || !addedBy.trim()) return
+    setIsPending(true)
+    setError(null)
     const fd = new FormData()
     fd.append('afterStepNumber', afterStep)
     fd.append('customLabel', suggestedLabel)
     fd.append('customTitle', customTitle)
     fd.append('addedBy', addedBy)
-    startTransition(async () => {
+    try {
       await addCustomStep(probationId, fd)
       setOpen(false)
       setCustomTitle('')
       setAddedBy('')
-    })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add step. Please try again.')
+    } finally {
+      setIsPending(false)
+    }
   }
 
   if (!open) {
@@ -114,6 +120,10 @@ export default function AddCustomStepForm({ probationId, existingSteps }: Props)
         />
       </div>
 
+      {error && (
+        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>
+      )}
+
       <div className="flex gap-3">
         <button
           type="submit"
@@ -124,7 +134,7 @@ export default function AddCustomStepForm({ probationId, existingSteps }: Props)
         </button>
         <button
           type="button"
-          onClick={() => setOpen(false)}
+          onClick={() => { setOpen(false); setError(null) }}
           className="text-sm border border-slate-300 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors"
         >
           Cancel

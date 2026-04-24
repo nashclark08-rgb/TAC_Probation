@@ -284,7 +284,7 @@ export async function addCustomStep(probationId: string, formData: FormData) {
   })
 
   const baseStep = allSteps.find((s) => s.stepNumber === afterStepNumber && !s.isCustom)
-  if (!baseStep) return
+  if (!baseStep) throw new Error(`Step ${afterStepNumber} not found on this probation record.`)
 
   // Count existing custom steps for this base step number to compute sortOrder
   const existingCustomCount = allSteps.filter(
@@ -295,7 +295,7 @@ export async function addCustomStep(probationId: string, formData: FormData) {
 
   // Check for sortOrder collision (shouldn't happen but guard anyway)
   const collision = allSteps.find((s) => Math.abs(s.sortOrder - newSortOrder) < 0.001)
-  if (collision) return
+  if (collision) throw new Error('A step already exists at that position. Please refresh and try again.')
 
   const newStep = await prisma.probationStep.create({
     data: {
