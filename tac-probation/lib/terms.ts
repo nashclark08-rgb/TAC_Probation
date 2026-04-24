@@ -82,3 +82,21 @@ export function formatDateRange(start: Date | null, end: Date | null): string {
   const fmt = (d: Date) => d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })
   return `${fmt(start)} – ${fmt(end)}`
 }
+
+// Distribute remaining steps evenly across the extension period.
+// Returns one window per step number in remainingStepNumbers.
+export function computeExtendedStepWindows(
+  extendedAt: Date,
+  extensionEndDate: Date,
+  remainingStepNumbers: number[]
+): Array<{ stepNumber: number; startDate: Date; endDate: Date }> {
+  if (remainingStepNumbers.length === 0) return []
+  const totalMs = extensionEndDate.getTime() - extendedAt.getTime()
+  if (totalMs <= 0) return []
+  const windowMs = totalMs / remainingStepNumbers.length
+  return remainingStepNumbers.map((stepNumber, idx) => ({
+    stepNumber,
+    startDate: new Date(extendedAt.getTime() + idx * windowMs),
+    endDate: new Date(extendedAt.getTime() + (idx + 1) * windowMs - 1),
+  }))
+}

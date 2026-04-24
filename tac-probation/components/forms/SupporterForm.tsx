@@ -19,6 +19,7 @@ interface DefaultValues {
   role?: string
   subSchool?: string | null
   department?: string | null
+  canAccessAdmin?: boolean
 }
 
 export default function SupporterForm({
@@ -100,6 +101,25 @@ export default function SupporterForm({
               className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
             />
           </div>
+        </div>
+
+        {/* Admin access toggle */}
+        <div className="bg-slate-50 border border-slate-200 rounded-lg px-4 py-3">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              name="canAccessAdmin"
+              defaultChecked={defaultValues?.canAccessAdmin ?? false}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#1e3a5f] focus:ring-[#1e3a5f]"
+            />
+            <div>
+              <span className="block text-sm font-medium text-slate-700">Admin Page Access</span>
+              <span className="block text-xs text-slate-500 mt-0.5">
+                Grants this person a link to the Admin section from their supporting staff portal.
+                Use for senior leaders such as the Principal, Deputy Principal, or Director of T&amp;L.
+              </span>
+            </div>
+          </label>
         </div>
 
         <div className="flex gap-3 pt-2">

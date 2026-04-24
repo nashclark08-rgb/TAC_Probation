@@ -8,15 +8,16 @@ datasource db {
 }
 
 model SupportingStaff {
-  id          String   @id @default(cuid())
-  name        String
-  email       String   @unique
-  role        String   // hod | stage_leader | dean_of_studies | director_tl | deputy_principal | hr | curriculum_leader | middle_leader | academic_admin | principal
-  subSchool   String?  // junior | senior | both
-  department  String?
-  portalToken String   @unique @default(cuid())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String   @id @default(cuid())
+  name           String
+  email          String   @unique
+  role           String   // hod | stage_leader | dean_of_studies | director_tl | deputy_principal | hr | curriculum_leader | middle_leader | academic_admin | principal
+  subSchool      String?  // junior | senior | both
+  department     String?
+  portalToken    String   @unique @default(cuid())
+  canAccessAdmin Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   hodFor           Staff[] @relation("AssignedHod")
   stageFor         Staff[] @relation("AssignedStageLeader")
@@ -82,6 +83,7 @@ model Probation {
   extendedAt        DateTime?
   extendedBy        String?
   extensionFromStep Int?
+  extensionEndDate  DateTime?
   steps             ProbationStep[]
   concerns          EarlyConcern[]
   createdAt         DateTime        @default(now())

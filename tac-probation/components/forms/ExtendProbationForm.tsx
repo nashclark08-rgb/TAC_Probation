@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { extendProbation } from '@/lib/actions'
 
 interface Props {
@@ -12,16 +12,28 @@ export default function ExtendProbationForm({ probationId, currentStep }: Props)
   const [open, setOpen] = useState(false)
   const [reason, setReason] = useState('')
   const [extendedBy, setExtendedBy] = useState('')
-  const [isPending, startTransition] = useTransition()
+  const [extensionEndDate, setExtensionEndDate] = useState('')
+  const [isPending, setIsPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!reason.trim() || !extendedBy.trim()) return
+    setIsPending(true)
+    setError(null)
     const fd = new FormData()
     fd.append('reason', reason)
     fd.append('extendedBy', extendedBy)
     fd.append('fromStep', String(currentStep))
-    startTransition(() => extendProbation(probationId, fd))
+    if (extensionEndDate) fd.append('extensionEndDate', extensionEndDate)
+    try {
+      await extendProbation(probationId, fd)
+      setOpen(false)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to extend probation. Please try again.')
+    } finally {
+      setIsPending(false)
+    }
   }
 
   if (!open) {
@@ -41,7 +53,7 @@ export default function ExtendProbationForm({ probationId, currentStep }: Props)
       <div>
         <h3 className="text-sm font-semibold text-amber-800 mb-0.5">Extend Probation Period</h3>
         <p className="text-xs text-amber-600">
-          This will set the probation status to Extended from Step {currentStep} and notify the Director of Teaching & Learning,
+          This will set the probation status to Extended from Step {currentStep} and notify the Director of Teaching &amp; Learning,
           Deputy Principal, and Dean of Studies. They will receive a template email to send to the staff member.
         </p>
       </div>
@@ -74,6 +86,26 @@ export default function ExtendProbationForm({ probationId, currentStep }: Props)
         />
       </div>
 
+      <div>
+        <label className="block text-sm font-medium text-amber-800 mb-1">
+          Expected Completion Date
+          <span className="ml-1 text-xs text-amber-500 font-normal">(optional — used to recalculate step dates)</span>
+        </label>
+        <input
+          type="date"
+          value={extensionEndDate}
+          onChange={(e) => setExtensionEndDate(e.target.value)}
+          className="w-full border border-amber-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white"
+        />
+        <p className="text-xs text-amber-500 mt-1">
+          When set, the system will distribute remaining steps evenly across this period and highlight them in amber on the timeline.
+        </p>
+      </div>
+
+      {error && (
+        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>
+      )}
+
       <div className="flex gap-3">
         <button
           type="submit"
@@ -84,7 +116,7 @@ export default function ExtendProbationForm({ probationId, currentStep }: Props)
         </button>
         <button
           type="button"
-          onClick={() => setOpen(false)}
+          onClick={() => { setOpen(false); setError(null) }}
           className="text-sm border border-slate-300 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors"
         >
           Cancel

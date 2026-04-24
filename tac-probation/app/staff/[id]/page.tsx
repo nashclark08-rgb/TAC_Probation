@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import BackLink from '@/components/BackLink'
 import { STEPS, OUTCOME_LABELS } from '@/lib/constants'
-import { getStepDateRange, formatDateRange } from '@/lib/terms'
+import { getStepDateRange, formatDateRange, computeExtendedStepWindows } from '@/lib/terms'
 import EarlyConcernForm from '@/components/forms/EarlyConcernForm'
 import FileUpload from '@/components/forms/FileUpload'
 import ExtendProbationForm from '@/components/forms/ExtendProbationForm'
@@ -46,6 +46,23 @@ export default async function StaffDetailPage({ params }: { params: Promise<{ id
   const stepDateRanges = await Promise.all(
     STEPS.map((s) => getStepDateRange(member.startDate, s.number))
   )
+
+  // Compute recalculated windows for extended probations
+  const extendedWindowMap = new Map<number, { startDate: Date; endDate: Date }>()
+  if (prob?.status === 'extended' && prob.extensionEndDate && prob.extendedAt) {
+    const remainingStepNumbers = STEPS
+      .filter((s) => {
+        const rec = prob.steps.find((ps) => ps.stepNumber === s.number && !ps.isCustom)
+        return rec?.status !== 'completed'
+      })
+      .map((s) => s.number)
+    const windows = computeExtendedStepWindows(
+      new Date(prob.extendedAt),
+      new Date(prob.extensionEndDate),
+      remainingStepNumbers
+    )
+    for (const w of windows) extendedWindowMap.set(w.stepNumber, { startDate: w.startDate, endDate: w.endDate })
+  }
 
   // Audit log: query by staffId + legacy entityType lookup
   const auditLogs = await prisma.auditLog.findMany({
@@ -94,19 +111,20 @@ export default async function StaffDetailPage({ params }: { params: Promise<{ id
             </p>
           </div>
         </div>
-        <div className="flex flex-col items-end gap-2">
+        {/* Status card */}
+        <div className="flex flex-col items-stretch gap-2 min-w-[172px] shrink-0">
           <StatusBadge status={prob?.status ?? 'unknown'} />
           <Link href={`/staff/${id}/report`}
-            className="text-xs border border-slate-300 text-slate-600 px-3 py-1 rounded-lg hover:bg-slate-50 transition-colors">
+            className="flex items-center justify-center gap-1.5 text-sm font-semibold bg-[#1e3a5f] text-white px-4 py-2.5 rounded-lg hover:bg-[#2d527d] transition-colors shadow-sm">
             View Report
           </Link>
           <Link href={`/staff/${id}/edit`}
-            className="text-xs border border-[#1e3a5f]/30 text-[#1e3a5f] px-3 py-1 rounded-lg hover:bg-[#1e3a5f]/5 transition-colors">
+            className="flex items-center justify-center gap-1.5 text-sm font-medium border border-slate-200 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors">
             Edit Record
           </Link>
           {member.teacherToken ? (
             <a href={`/teacher/${member.teacherToken}`} target="_blank" rel="noopener noreferrer"
-              className="text-xs border border-[#1e3a5f]/40 text-[#1e3a5f] px-3 py-1 rounded-lg hover:bg-[#1e3a5f]/5 transition-colors">
+              className="flex items-center justify-center gap-1.5 text-sm font-medium border border-[#1e3a5f]/30 text-[#1e3a5f] px-4 py-2 rounded-lg hover:bg-[#1e3a5f]/5 transition-colors">
               Teacher Portal ↗
             </a>
           ) : (
@@ -158,17 +176,27 @@ export default async function StaffDetailPage({ params }: { params: Promise<{ id
             const status = stepRecord?.status ?? 'pending'
             const customAfter = prob?.steps.filter((s) => s.isCustom && s.stepNumber === stepDef.number) ?? []
             const isLast = idx === STEPS.length - 1
+            const hasExtendedWindow = extendedWindowMap.has(stepDef.number)
             return (
               <div key={stepDef.number} className="flex items-center">
                 <div className="flex flex-col items-center w-20">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 ${
                     status === 'completed' ? 'bg-emerald-100 border-emerald-400 text-emerald-700'
                     : status === 'in_progress' ? 'bg-[#1e3a5f] border-[#1e3a5f] text-white'
+                    : hasExtendedWindow ? 'bg-amber-50 border-amber-400 text-amber-700'
                     : 'bg-white border-slate-200 text-slate-400'
                   }`}>
                     {status === 'completed' ? '✓' : stepDef.number}
                   </div>
                   <p className="text-xs text-center mt-1 leading-tight text-slate-500 px-1">{stepDef.title}</p>
+                  {hasExtendedWindow && status !== 'completed' && (() => {
+                    const w = extendedWindowMap.get(stepDef.number)!
+                    return (
+                      <span className="text-xs text-amber-600 text-center leading-tight mt-0.5 px-0.5">
+                        {formatDateRange(w.startDate, w.endDate)}
+                      </span>
+                    )
+                  })()}
                   {status === 'completed' && stepRecord?.outcome && (
                     <span className={`text-xs px-1.5 py-0.5 rounded mt-1 font-medium ${
                       stepRecord.outcome === 'commendation' || stepRecord.outcome === 'confirmed' ? 'bg-emerald-100 text-emerald-700'
@@ -247,19 +275,29 @@ export default async function StaffDetailPage({ params }: { params: Promise<{ id
                       </div>
                       <p className="text-xs text-slate-500 mt-0.5">{stepDef.timing} · Led by: {stepDef.leader}</p>
 
-                      {dateRange.startDate && (
-                        <p className={`text-xs mt-1 font-medium ${
-                          !isCompleted && dateRange.isOverdue ? 'text-red-600'
-                          : !isCompleted && dateRange.onTrack ? 'text-emerald-600'
-                          : 'text-slate-400'
-                        }`}>
-                          {formatDateRange(dateRange.startDate, dateRange.endDate)}
-                          {!isCompleted && dateRange.isOverdue && ' — Overdue'}
-                          {!isCompleted && dateRange.isUpcoming && ' — Upcoming'}
-                          {!isCompleted && dateRange.onTrack && ' — On Track'}
-                          {isCompleted && ' — Completed'}
-                        </p>
-                      )}
+                      {(() => {
+                        const extWindow = extendedWindowMap.get(stepDef.number)
+                        if (extWindow && !isCompleted) {
+                          return (
+                            <p className="text-xs mt-1 font-medium text-amber-600">
+                              {formatDateRange(extWindow.startDate, extWindow.endDate)} — Revised Schedule
+                            </p>
+                          )
+                        }
+                        return dateRange.startDate ? (
+                          <p className={`text-xs mt-1 font-medium ${
+                            !isCompleted && dateRange.isOverdue ? 'text-red-600'
+                            : !isCompleted && dateRange.onTrack ? 'text-emerald-600'
+                            : 'text-slate-400'
+                          }`}>
+                            {formatDateRange(dateRange.startDate, dateRange.endDate)}
+                            {!isCompleted && dateRange.isOverdue && ' — Overdue'}
+                            {!isCompleted && dateRange.isUpcoming && ' — Upcoming'}
+                            {!isCompleted && dateRange.onTrack && ' — On Track'}
+                            {isCompleted && ' — Completed'}
+                          </p>
+                        ) : null
+                      })()}
 
                       {stepDef.aitslFocus && (
                         <p className="text-xs text-indigo-600 mt-0.5">AITSL Focus: {stepDef.aitslFocus}</p>
@@ -521,24 +559,12 @@ function OutcomePill({ outcome }: { outcome: string }) {
   )
 }
 
-function TeacherTokenForm({ staffId }: { staffId: string }) {
-  return (
-    <form action={generateTeacherToken.bind(null, staffId)}>
-      <button type="submit"
-        className="text-xs border border-slate-300 text-slate-500 px-3 py-1 rounded-lg hover:bg-slate-50 transition-colors"
-        title="Generate a private portal link for this teacher">
-        Generate Teacher Portal
-      </button>
-    </form>
-  )
-}
-
 function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    active: 'bg-blue-100 text-blue-800 border border-blue-200',
-    completed: 'bg-emerald-100 text-emerald-800 border border-emerald-200',
-    extended: 'bg-amber-100 text-amber-800 border border-amber-200',
-    not_confirmed: 'bg-maroon-100 text-maroon-800 border border-maroon-200',
+  const styles: Record<string, { badge: string; dot: string }> = {
+    active:        { badge: 'bg-blue-50 text-blue-800 border-blue-200',         dot: 'bg-blue-500' },
+    completed:     { badge: 'bg-emerald-50 text-emerald-800 border-emerald-300', dot: 'bg-emerald-500' },
+    extended:      { badge: 'bg-amber-50 text-amber-800 border-amber-300',       dot: 'bg-amber-500' },
+    not_confirmed: { badge: 'bg-red-50 text-red-800 border-red-200',             dot: 'bg-red-500' },
   }
   const labels: Record<string, string> = {
     active: 'Active Probation',
@@ -546,9 +572,23 @@ function StatusBadge({ status }: { status: string }) {
     extended: 'Probation Extended',
     not_confirmed: 'Not Confirmed',
   }
+  const s = styles[status] ?? { badge: 'bg-slate-50 text-slate-700 border-slate-200', dot: 'bg-slate-400' }
   return (
-    <span className={`text-sm px-3 py-1.5 rounded-full font-medium ${map[status] ?? 'bg-slate-100 text-slate-700'}`}>
+    <span className={`flex items-center justify-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-xl border shadow-sm ${s.badge}`}>
+      <span className={`w-2 h-2 rounded-full shrink-0 ${s.dot}`} />
       {labels[status] ?? status}
     </span>
+  )
+}
+
+function TeacherTokenForm({ staffId }: { staffId: string }) {
+  return (
+    <form action={generateTeacherToken.bind(null, staffId)}>
+      <button type="submit"
+        className="w-full flex items-center justify-center gap-1.5 text-sm font-medium border border-slate-200 text-slate-500 px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors"
+        title="Generate a private portal link for this teacher">
+        Generate Teacher Portal
+      </button>
+    </form>
   )
 }

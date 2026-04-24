@@ -53,7 +53,12 @@ export default async function SupportersPage() {
             return (
               <div key={s.id} className="flex items-center justify-between px-6 py-4">
                 <div>
-                  <div className="font-medium text-slate-800">{s.name}</div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-slate-800">{s.name}</span>
+                    {s.canAccessAdmin && (
+                      <span className="text-xs bg-[#1e3a5f]/10 text-[#1e3a5f] px-2 py-0.5 rounded-full font-medium">Admin</span>
+                    )}
+                  </div>
                   <div className="text-sm text-slate-500">{roleDisplay}</div>
                   <div className="text-xs text-slate-400">
                     {s.email}

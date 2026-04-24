@@ -59,7 +59,7 @@ export default async function AdminPage() {
       )}
 
       {/* Quick nav cards */}
-      <div className="grid md:grid-cols-3 gap-4 mb-8">
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <AdminCard
           title="Supporting Staff"
           description="Manage HoDs, Stage Leaders, Dean of Studies, Director T&L, Deputy Principals, and HR"
@@ -83,6 +83,13 @@ export default async function AdminPage() {
           href="/staff/new"
           buttonLabel="Add Teacher"
           colour="emerald"
+        />
+        <AdminCard
+          title="User Manual"
+          description="Navigation guide, automation timeline, and email content reference for new users"
+          href="/admin/manual"
+          buttonLabel="Open Manual"
+          colour="slate"
         />
       </div>
 
@@ -141,16 +148,17 @@ function SetupItem({ done, label, href }: { done: boolean; label: string; href: 
 }
 
 function AdminCard({ title, description, count, href, buttonLabel, colour }: {
-  title: string; description: string; count: number; href: string; buttonLabel: string; colour: string
+  title: string; description: string; count?: number; href: string; buttonLabel: string; colour: string
 }) {
   const colours: Record<string, string> = {
     blue: 'border-blue-200 bg-blue-50',
     indigo: 'border-indigo-200 bg-indigo-50',
     emerald: 'border-emerald-200 bg-emerald-50',
+    slate: 'border-slate-200 bg-slate-50',
   }
   return (
     <div className={`rounded-xl border p-5 ${colours[colour] ?? ''}`}>
-      <div className="text-2xl font-bold text-slate-700 mb-1">{count}</div>
+      {count !== undefined && <div className="text-2xl font-bold text-slate-700 mb-1">{count}</div>}
       <h3 className="font-semibold text-slate-800 mb-1">{title}</h3>
       <p className="text-xs text-slate-500 mb-4">{description}</p>
       <Link href={href} className="text-sm bg-[#1e3a5f] text-white px-4 py-2 rounded-lg hover:bg-[#2d527d] transition-colors inline-block">

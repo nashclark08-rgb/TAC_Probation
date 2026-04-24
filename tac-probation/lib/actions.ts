@@ -221,6 +221,7 @@ export async function extendProbation(probationId: string, formData: FormData) {
   const reason = formData.get('reason') as string
   const extendedBy = formData.get('extendedBy') as string
   const fromStep = parseInt(formData.get('fromStep') as string)
+  const extensionEndDateRaw = formData.get('extensionEndDate') as string | null
 
   const probation = await prisma.probation.findUnique({
     where: { id: probationId },
@@ -236,6 +237,7 @@ export async function extendProbation(probationId: string, formData: FormData) {
       extendedAt: new Date(),
       extendedBy,
       extensionFromStep: fromStep,
+      extensionEndDate: extensionEndDateRaw ? new Date(extensionEndDateRaw) : null,
     },
   })
 

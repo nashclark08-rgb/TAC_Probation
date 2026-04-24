@@ -104,9 +104,19 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
         <div className="bg-[#1e3a5f] text-white rounded-xl p-6 mb-6">
           <h1 className="text-xl font-bold text-white">Trinity Anglican College</h1>
           <p className="text-slate-300 text-sm mt-1">Probation Tracker — Supporting Staff Portal</p>
-          <div className="mt-4 pt-4 border-t border-white/20">
-            <p className="font-semibold text-lg">{supporter.name}</p>
-            <p className="text-slate-300 text-sm">{roleLabel}{subSchoolSuffix(supporter.subSchool)}</p>
+          <div className="mt-4 pt-4 border-t border-white/20 flex items-end justify-between gap-4">
+            <div>
+              <p className="font-semibold text-lg">{supporter.name}</p>
+              <p className="text-slate-300 text-sm">{roleLabel}{subSchoolSuffix(supporter.subSchool)}</p>
+            </div>
+            {supporter.canAccessAdmin && (
+              <Link
+                href="/admin"
+                className="text-xs bg-white/10 hover:bg-white/20 border border-white/20 text-white px-3 py-1.5 rounded-lg transition-colors shrink-0"
+              >
+                Admin Dashboard →
+              </Link>
+            )}
           </div>
         </div>
 

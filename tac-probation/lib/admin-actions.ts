@@ -36,9 +36,10 @@ export async function createSupportingStaff(formData: FormData) {
   const role = formData.get('role') as string
   const subSchool = formData.get('subSchool') as string
   const department = formData.get('department') as string
+  const canAccessAdmin = formData.get('canAccessAdmin') === 'on'
 
   const supporter = await prisma.supportingStaff.create({
-    data: { name, email, role, subSchool: subSchool || null, department: department || null },
+    data: { name, email, role, subSchool: subSchool || null, department: department || null, canAccessAdmin },
   })
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'
@@ -63,10 +64,11 @@ export async function updateSupportingStaff(id: string, formData: FormData) {
   const role = formData.get('role') as string
   const subSchool = formData.get('subSchool') as string
   const department = formData.get('department') as string
+  const canAccessAdmin = formData.get('canAccessAdmin') === 'on'
 
   await prisma.supportingStaff.update({
     where: { id },
-    data: { name, email, role, subSchool: subSchool || null, department: department || null },
+    data: { name, email, role, subSchool: subSchool || null, department: department || null, canAccessAdmin },
   })
   revalidatePath('/admin/supporters')
   redirect('/admin/supporters')
